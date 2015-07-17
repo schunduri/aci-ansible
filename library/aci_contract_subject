@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jedelman8@gmail.com>
+# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,8 +64,8 @@ options:
     reverse_filter_ports:
         description:
             - Apply the same subject rule to the reverse filter ports when
-              the contract applies in both directions.  apply_both_directions must
-              be true to use this flag
+              the contract applies in both directions.  apply_both_directions
+              must be true to use this flag
         required: false
         default: null
         choices: ['true', 'false', 'yes', 'no']
@@ -101,7 +102,8 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC (resolvable by Ansible control
+              host)
         required: true
         default: null
         choices: []
@@ -160,22 +162,39 @@ from cobra.mit.request import DnQuery
 from cobra.internal.codec.xmlcodec import toXMLStr
 
 
+KEY_MAP = {
+    'descr': 'descr',
+    'prio': 'prio'
+}
+
+
+def get_attributes(keymap, mo):
+    resource = {}
+    if mo:
+        for mine, cobra in keymap.iteritems():
+            value = getattr(mo, cobra)
+            if value:
+                resource[mine] = value
+    return resource
+
+
+def get_subj(subj_mo):
+    existing = get_attributes(KEY_MAP, subj_mo)
+    try:
+        ex_rev_filter_ports = True if subj_mo.revFltPorts == 'yes' else False
+        existing['reverse_filter_ports'] = ex_rev_filter_ports
+    except AttributeError:
+        return existing
+    return existing
+
+
 def get_existing(moDir, subj_mo, proposed_filters, tenant, contract, name):
 
     ex_in_filters = []
     ex_out_filters = []
     ex_filters = []
 
-    ex_prio = None
-    ex_descr = None
-    ex_rev_filter_ports = None
-
-    if subj_mo:
-        ex_prio = subj_mo.prio
-        ex_descr = subj_mo.descr
-        ex_rev_filter_ports = True if subj_mo.revFltPorts == 'yes' else False
-
-    existing = dict(descr=ex_descr, prio=ex_prio, revFltPorts=ex_rev_filter_ports)
+    existing = get_subj(subj_mo)
 
     ex_apply_both_dirs = True
 
@@ -185,20 +204,26 @@ def get_existing(moDir, subj_mo, proposed_filters, tenant, contract, name):
     subj_children = moDir.query(dnq)
     rns = [str(each.rn) for each in subj_children]
 
+    # TODO: use the class filters to get vzInTerm, vzOutTerm, etc.
+    # instead of this hack
+
     if 'intmnl' in rns:
         ex_apply_both_dirs = False
 
         uri = 'uni/tn-{0}/brc-{1}/subj-{2}/intmnl'
-        ex_in_filters = get_existing_filters(moDir, uri, tenant, contract, name)
+        ex_in_filters = get_existing_filters(moDir, uri, tenant,
+                                             contract, name)
 
         uri = 'uni/tn-{0}/brc-{1}/subj-{2}/outtmnl'
-        ex_out_filters = get_existing_filters(moDir, uri, tenant, contract, name)
+        ex_out_filters = get_existing_filters(moDir, uri, tenant,
+                                              contract, name)
 
     else:
         uri = 'uni/tn-{0}/brc-{1}/subj-{2}'
         ex_filters = get_existing_filters(moDir, uri, tenant, contract, name)
 
-    existing_filters = dict(filters=ex_filters, in_filters=ex_in_filters, out_filters=ex_out_filters)
+    existing_filters = dict(filters=ex_filters, in_filters=ex_in_filters,
+                            out_filters=ex_out_filters)
     existing['apply_both_directions'] = ex_apply_both_dirs
 
     return existing, existing_filters
@@ -212,24 +237,89 @@ def get_existing_filters(moDir, uri, tenant, contract, subject):
     subj_children = moDir.query(dnq)
 
     for each in subj_children:
-        existing_filters = [each.tnVzFilterName for each in subj_children if each.tCl == 'vzFilter']
+        existing_filters = [each.tnVzFilterName for each in subj_children
+                            if each.tCl == 'vzFilter']
 
     return existing_filters
 
 
-def allowed_filters(moDir, proposed_filters, tenant):
+def get_allowed_filters(moDir, proposed_filters, tenant):
     # creating a list of possible filters that can be used
-    # includes filters from two tenants: common and the one passed in to the module
+    # includes filters from two tenants: common and the one passed
+    # in to the module
+
     filter_objects = moDir.lookupByClass('vzFilter')
-    allowed_filters = [str(each.name) for each in filter_objects if 'common' in str(each.dn) or tenant in str(each.dn)]
+    # TODO: clean up the filter
+    all_filters = [str(each.name) for each in filter_objects
+                   if 'common' in str(each.dn) or tenant in str(each.dn)]
+
+    return all_filters
+
+
+def do_all_filters_exist(proposed_filters, allowed_filters):
 
     # checking proposed filters against allowed filters
     # to determine if the proposed needs to be configured first
+
+    # returns True if a proposed filter doesn't exist yet on fabric
+    # returns False if we're all good
+
     for type_filter, filters in proposed_filters.iteritems():
         for prop in filters:
             if prop not in allowed_filters:
                 return True, prop
     return False, None
+
+
+def add_filters(new_sub_mo, type_filter, filter_list):
+
+    if filter_list:
+        if type_filter == 'filters':
+            for each in filter_list:
+                RsSubjFiltAtt(new_sub_mo, tnVzFilterName=each)
+        elif type_filter == 'in_filters':
+            vzInTerm = InTerm(new_sub_mo)
+            for each in filter_list:
+                RsFiltAtt(vzInTerm, tnVzFilterName=each)
+
+        elif type_filter == 'out_filters':
+            vzOutTerm = OutTerm(new_sub_mo)
+            for each in filter_list:
+                RsFiltAtt(vzOutTerm, tnVzFilterName=each)
+
+
+def remove_filter(type_filter, new_sub_mo, each):
+    if type_filter == 'filters':
+        obj = RsSubjFiltAtt(new_sub_mo, tnVzFilterName=each)
+    elif type_filter == 'in_filters':
+        vzInTerm = InTerm(new_sub_mo)
+        obj = RsFiltAtt(vzInTerm, tnVzFilterName=each)
+    elif type_filter == 'out_filters':
+        vzOutTerm = OutTerm(new_sub_mo)
+        obj = RsFiltAtt(vzOutTerm, tnVzFilterName=each)
+    obj.delete()
+
+
+def get_delta_objects(proposed_objects, existing_objects):
+
+    delta = {}
+    remove = {}
+    for object_type, lists in proposed_objects.iteritems():
+        delta[object_type] = existing_objects.get(
+            object_type) == proposed_objects.get(object_type)
+        remove[object_type] = list(set(
+            existing_objects.get(object_type)).difference(
+            proposed_objects.get(object_type)))
+    return delta, remove
+
+
+def normalize_to_list(data):
+    if isinstance(data, str) or isinstance(data, unicode):
+        return [data]
+    elif data:
+        return data
+    else:
+        return []
 
 
 def main():
@@ -241,8 +331,7 @@ def main():
             tenant=dict(type='str', required=True),
             descr=dict(type='str'),
             prio=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
-            apply_both_directions=dict(choices=BOOLEANS, type='bool',
-                                       default=True),
+            apply_both_directions=dict(choices=BOOLEANS, type='bool'),
             reverse_filter_ports=dict(choices=BOOLEANS, type='bool'),
             filters=dict(type='list'),
             in_filters=dict(type='list'),
@@ -271,9 +360,9 @@ def main():
     apply_both_directions = module.params['apply_both_directions']
     prio = module.params['prio']
     reverse_filter_ports = module.params['reverse_filter_ports']
-    filters = module.params['filters']
-    in_filters = module.params['in_filters']
-    out_filters = module.params['out_filters']
+    filters = normalize_to_list(module.params['filters'])
+    in_filters = normalize_to_list(module.params['in_filters'])
+    out_filters = normalize_to_list(module.params['out_filters'])
     svc_graph = module.params['svc_graph']
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -296,90 +385,83 @@ def main():
 
     if apply_both_directions:
         if in_filters or out_filters:
-            module.fail_json(msg='in_filters and out_filters only to be used\n' +
-                             ' with apply_both_directions=false, you need to\n' +
-                             ' use param filters')
+            module.fail_json(msg='in_filters and out_filters only to be used'
+                             + '\nwith apply_both_directions=false, you need'
+                             + 'to\n use param filters')
+
     if apply_both_directions is False and reverse_filter_ports:
         module.fail_json(msg='when apply_both_directions=false, \n ' +
                          ' reverse_filter_ports must be false or null')
 
-    subj_mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}/subj-{2}'.format(tenant, contract, name))
+    args = dict(descr=descr, prio=prio, svc_graph=svc_graph,
+                reverse_filter_ports=reverse_filter_ports)
 
-    existing = {}
+    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
-    proposed_filters = {}
+    args_filters = dict(filters=filters, in_filters=in_filters,
+                        out_filters=out_filters)
 
-    args_filters = dict(filters=filters, in_filters=in_filters, out_filters=out_filters)
+    proposed_filters = dict((k, v) for k, v in args_filters.iteritems()
+                            if v is not None)
 
-    for key, value in args_filters.iteritems():
-        if value:
-            proposed_filters[key] = value
+    subj_mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}/subj-{2}'.format(
+        tenant, contract, name))
 
-    # if the exact subject already exists...otherwise existing is nada
-    existing_filters = {}
     if subj_mo:
 
-        not_allowed, prop = allowed_filters(moDir, proposed_filters, tenant)
+        allowed_filters = get_allowed_filters(moDir, proposed_filters, tenant)
+
+        not_allowed, denied_filter = do_all_filters_exist(proposed_filters,
+                                                          allowed_filters)
         if not_allowed:
-            module.fail_json(msg='proposed filter needs to be configured first', filter=prop)
+            module.fail_json(msg="proposed filter does not exist. add it.",
+                             filter=denied_filter)
 
-        existing, existing_filters = get_existing(moDir, subj_mo, proposed_filters, tenant, contract, name)
+        existing, existing_filters = get_existing(moDir, subj_mo,
+                                                  proposed_filters, tenant,
+                                                  contract, name)
 
-        if existing['apply_both_directions'] != apply_both_directions:
-            module.fail_json(msg='cannot change directions; subject needs to be removed first')
-
-    args = dict(descr=descr, prio=prio, revFltPorts=reverse_filter_ports,
-                svc_graph=svc_graph)
-
-    proposed = {}
-    for key, value in args.iteritems():
-        if value is not None:
-            proposed[key] = value
+        if apply_both_directions is not None:
+            if existing.get('apply_both_directions') != apply_both_directions:
+                module.fail_json(msg='cannot change directions; subject needs'
+                                 + '\nto be removed first')
+    else:
+        existing_filters = dict(filters=[], in_filters=[],
+                                out_filters=[])
+        existing = {}
 
     delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
+    module.exit_json(aa=delta, bb=proposed, cc=existing)
+    delta_objects, remove_objects = get_delta_objects(proposed_filters,
+                                                      existing_filters)
+
+    delta_bools = delta_objects.values()
+    delta_for_lists = False
+    if False in delta_bools:
+        delta_for_lists = True
 
     new_sub_mo = None
-
-    # gather the filters that are proposed, but do not exist
-    # yet in the subject being managed
-    # delta_filter_check is var to determine if there is at least
-    # one element in any given list to determine if a change is needed
-    delta_filters = {}
-    delta_filter_check = False
-    for type_filter, filter_list in proposed_filters.iteritems():
-        temp_list = existing_filters.get(type_filter) or []
-        if temp_list is not None:
-            delta_filters[type_filter] = list(set(filter_list) - set(temp_list))
-            if delta_filters[type_filter]:
-                delta_filter_check = True
-
     if state == 'present':
-        if delta or (not existing) or delta_filter_check:
+        if delta or (not existing) or delta_for_lists:
             sub_args = {}
             for key, value in delta.iteritems():
                 sub_args[key] = value
-
-            # issue with committing this as boolean, so converting this to a string
+            # issue with committing this as boolean, so converting it to str
             # hasn't happened with other api calls, maybe a bug?
             if sub_args.get('revFltPorts') is not None:
                 sub_args['revFltPorts'] = str(sub_args['revFltPorts']).lower()
+            new_sub_mo = Subj(con_mo, name=name, **sub_args)
 
-            new_sub_mo = Subj(con_mo, name=name, **sub_args) if sub_args else Subj(con_mo, name=name)
+            for type_filter, bool_condition in delta_objects.iteritems():
+                if not bool_condition:
+                    adders = list(set(
+                        proposed_filters.get(type_filter)).difference(
+                        existing_filters.get(type_filter)))
+                    add_filters(new_sub_mo, type_filter, adders)
 
-            if delta_filter_check:
-                for type_filter, filter_list in delta_filters.iteritems():
-                    if type_filter == 'filters':
-                        for each in filter_list:
-                            RsSubjFiltAtt(new_sub_mo, tnVzFilterName=each)
-                    elif type_filter == 'in_filters':
-                        vzInTerm = InTerm(new_sub_mo)
-                        for each in filter_list:
-                            vzRsFiltAtt = RsFiltAtt(vzInTerm, tnVzFilterName=each)
-
-                    elif type_filter == 'out_filters':
-                        vzOutTerm = OutTerm(new_sub_mo)
-                        for each in filter_list:
-                            vzRsFiltAtt = RsFiltAtt(vzOutTerm, tnVzFilterName=each)
+            for type_filter, filter_list in remove_objects.iteritems():
+                for each in filter_list:
+                    remove_filter(type_filter, new_sub_mo, each)
 
     elif state == 'absent':
         if existing:
@@ -398,12 +480,15 @@ def main():
             config_req = ConfigRequest()
             config_req.addMo(new_sub_mo)
             moDir.commit(config_req)
-            existing, existing_filters = get_existing(moDir, subj_mo, proposed_filters, tenant, contract, name)
+            existing, existing_filters = get_existing(moDir, subj_mo,
+                                                      proposed_filters,
+                                                      tenant, contract, name)
             existing['existing_filters'] = existing_filters
             results['new'] = existing
 
     results['proposed'] = proposed
     results['existing'] = existing
+    results['existing_filters'] = existing_filters
     results['state'] = state
     results['xmldoc'] = xmldoc
     results['changed'] = changed

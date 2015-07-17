@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jedelman8@gmail.com>
+# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +19,7 @@ DOCUMENTATION = '''
 ---
 
 module: aci_contract
-short_description: Manage initial contracts (does not include contract subjects)
+short_description: Manage initial contracts (does not include contract subjs)
 description:
     - Manages contract resource, but does not include subjects although
       subjects can be removed using this module
@@ -75,7 +76,7 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -124,13 +125,36 @@ from cobra.mit.request import DnQuery
 from cobra.internal.codec.xmlcodec import toXMLStr
 
 
+KEY_MAP = {
+    'descr': 'descr',
+    'scope': 'scope',
+    'prio': 'prio'
+}
+
+
+def get_attributes(keymap, mo):
+    resource = {}
+    if mo:
+        for mine, cobra in keymap.iteritems():
+            value = getattr(mo, cobra)
+            if value:
+                resource[mine] = value
+    return resource
+
+
+def get_existing(moDir, tenant, name):
+    mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}'.format(tenant, name))
+    return get_attributes(KEY_MAP, mo)
+
+
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
             tenant=dict(type='str', required=True),
-            scope=dict(choices=['application-profile', 'context', 'global', 'tenant']),
+            scope=dict(choices=['application-profile', 'context',
+                                'global', 'tenant']),
             prio=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
             descr=dict(type='str'),
             state=dict(choices=['present', 'absent'], required=True),
@@ -165,16 +189,12 @@ def main():
     if not tenant_mo:
         print module.fail_json(msg='tenant needs to be created first')
 
-    existing = {}
-    con_mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}'.format(tenant, name))
-    if con_mo:
-        existing = dict(scope=con_mo.scope, prio=con_mo.prio, descr=con_mo.descr)
+    existing = get_existing(moDir, tenant, name)
 
     args = dict(descr=descr, prio=prio, scope=scope)
-    proposed = {}
-    for key, value in args.iteritems():
-        if value:
-            proposed[key] = value.lower()
+
+    proposed = dict((k, v.lower()) for k, v in args.iteritems()
+                    if v is not None)
 
     delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
 
@@ -183,7 +203,7 @@ def main():
         if delta or not existing:
             con_args = {}
             for key, value in proposed.iteritems():
-                con_args[key] = delta.get(key, None) or existing[key]
+                con_args[key] = delta.get(key, existing.get(key))
             new_contract_mo = BrCP(tenant_mo, name=name, **con_args)
 
     elif state == 'absent':
@@ -203,9 +223,7 @@ def main():
             config_req = ConfigRequest()
             config_req.addMo(new_contract_mo)
             moDir.commit(config_req)
-            con_mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}'.format(tenant, name))
-            if con_mo:
-                results['new'] = dict(scope=con_mo.scope, prio=con_mo.prio, descr=con_mo.descr)
+            results['new'] = get_existing(moDir, tenant, name)
 
     results['proposed'] = proposed
     results['existing'] = existing

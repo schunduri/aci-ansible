@@ -125,6 +125,56 @@ from cobra.model.fv import RsCtx
 from cobra.internal.codec.xmlcodec import toXMLStr
 
 
+BD_KEY_MAP = {
+    'descr': 'descr',
+    'name': 'name'
+}
+SUBNET_KEY_MAP = {
+    'subnet': 'ip'
+}
+
+
+def get_attributes(keymap, mo):
+    resource = {}
+    if mo:
+        for mine, cobra in keymap.iteritems():
+            value = getattr(mo, cobra)
+            if value:
+                resource[mine] = value
+    return resource
+
+
+def get_bd(moDir, tenant, name):
+    mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}'.format(tenant, name))
+    return get_attributes(BD_KEY_MAP, mo)
+
+
+def get_subnet(moDir, tenant, name, subnet):
+    mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}/subnet-[{2}]'.format(tenant,
+                                                                  name,
+                                                                  subnet))
+    return get_attributes(SUBNET_KEY_MAP, mo)
+
+
+def get_context(moDir, tenant, name):
+    con = moDir.lookupByDn('uni/tn-{0}/BD-{1}/rsctx'.format(tenant,
+                                                            name)).tnFvCtxName
+    return dict(context=con)
+
+
+def get_existing(moDir, tenant, name, subnet):
+    existing = {}
+    bd = get_bd(moDir, tenant, name)
+    if bd:
+        existing.update(bd)
+        if subnet:
+            sub = get_subnet(moDir, tenant, name, subnet)
+            existing.update(sub)
+        existing.update(get_context(moDir, tenant, name))
+
+    return existing
+
+
 def main():
 
     module = AnsibleModule(
@@ -170,75 +220,53 @@ def main():
     if not context_mo:
         print module.fail_json(msg='context needs to be created first')
 
-    bdname = None
-    bddescr = None
-    bdsubnet = None
-    existing_context = None
-    net_new = True
-
-    bd_mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}'.format(tenant, name))
-
-    if bd_mo:
-        bdname = bd_mo.name
-        bddescr = bd_mo.descr
-        net_new = False
-
-        if subnet:
-            subnet_mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}/subnet-[{2}]'.format(tenant, name, subnet))
-            if subnet_mo:
-                bdsubnet = subnet_mo.ip
-
-        existing_context = moDir.lookupByDn('uni/tn-{0}/BD-{1}/rsctx'.format(tenant, name)).tnFvCtxName
-
-    existing = dict(name=bdname, descr=bddescr, subnet=bdsubnet, context=existing_context)
+    existing = get_existing(moDir, tenant, name, subnet)
 
     args = dict(name=name, descr=descr, subnet=subnet, context=context)
-    proposed = {}
-    for key, value in args.iteritems():
-        if value:
-            proposed[key] = value
+
+    proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
     delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
 
-    fvBD = None
+    new_mo = None
     if state == 'present':
-        if delta or net_new:
-            des = delta.get('descr', None)
-            fvBD = BD(tenant_mo, name=name, descr=des) if des else BD(tenant_mo, name=name)
-            to_subnet = delta.get('subnet', None) or existing['subnet']
-            if to_subnet:
-                fvSubnet = Subnet(fvBD, ip=to_subnet)
-            to_context = delta.get('context', None) or existing['context']
-            fvRsCtx = RsCtx(fvBD, tnFvCtxName=to_context)
+        if delta or not existing:
+            config_args = {}
+            for key, value in BD_KEY_MAP.iteritems():
+                config_value = delta.get(key, existing.get(key, None))
+                if config_value:
+                    config_args[value] = config_value
+            if 'name' in config_args.keys():
+                config_args.pop('name')
+            new_mo = BD(tenant_mo, name=name, **config_args)
+            config_args.clear()
+            for key, value in SUBNET_KEY_MAP.iteritems():
+                config_value = delta.get(key, existing.get(key, None))
+                if config_value:
+                    config_args[value] = config_value
+            if config_args:
+                Subnet(new_mo, **config_args)
+            RsCtx(new_mo, tnFvCtxName=delta.get('context',
+                                                existing.get('context')))
+
     elif state == 'absent':
-        if not net_new:
-            fvBD = BD(tenant_mo, name=name)
-            fvBD.delete()
+        if existing:
+            new_mo = BD(tenant_mo, name=name)
+            new_mo.delete()
 
     changed = False
     results = {}
     xmldoc = ''
-    if fvBD:
-        xmldoc = toXMLStr(fvBD)
+    if new_mo:
+        xmldoc = toXMLStr(new_mo)
         if module.check_mode:
             module.exit_json(changed=True, xmldoc=xmldoc)
         else:
             changed = True
             config_req = ConfigRequest()
-            config_req.addMo(fvBD)
+            config_req.addMo(new_mo)
             moDir.commit(config_req)
-
-            bd_mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}'.format(tenant, name))
-            if bd_mo:
-                bdname = bd_mo.name
-                bddescr = bd_mo.descr
-                if subnet:
-                    subnet_mo = moDir.lookupByDn('uni/tn-{0}/BD-{1}/subnet-[{2}]'.format(tenant, name, subnet))
-                    if subnet_mo:
-                        bdsubnet = subnet_mo.ip
-
-                results['new'] = dict(name=bdname, descr=bddescr, subnet=bdsubnet, context=existing_context)
-
+            results['new'] = get_existing(moDir, tenant, name, subnet)
 
     results['proposed'] = proposed
     results['existing'] = existing

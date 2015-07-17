@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jedelman8@gmail.com>
+# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +18,10 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_tenant
-short_description: Manage tenants in an ACI fabric
+module: aci_anp
+short_description: Manage top level application network profile object
 description:
-    - Offers ability to manage tenants
+    - Manage top level application network profile object (not EPGs)
 author: Jason Edelman (@jedelman8)
 requirements:
     - check version requirements ==============================================
@@ -28,24 +29,31 @@ requirements:
 options:
     name:
         description:
-            - Name of tenant
+            - Name of the application network profile
         required: true
         default: null
         choices: []
         aliases: []
     descr:
         description:
-            - description of tenant
+            - description of the application network profile
         required: false
+        default: null
+        choices: []
+        aliases: []
+    tenant:
+        description:
+            - name of tenant this application network profile will be part of
+        required: true
         default: null
         choices: []
         aliases: []
     state:
         description:
-            - Desired state of the tenant
+            - Desired state of the contract
         required: true
         default: null
-        choices: ['enabled','disabled']
+        choices: ['present','absent']
         aliases: []
     host:
         description:
@@ -78,41 +86,24 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure tenant exists
-- aci_tenant: name=customer_1 descr='tenant by Ansible' state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure tenant does not exist on system
-- aci_tenant: name=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 '''
-
 import socket
+
 from cobra.mit.access import MoDirectory
 from cobra.mit.session import LoginSession
 from cobra.mit.request import ConfigRequest
-from cobra.model.fv import Tenant
+from cobra.mit.request import DnQuery
+from cobra.model.fv import Ap
 from cobra.internal.codec.xmlcodec import toXMLStr
 
 
-KEY_MAP = {
-    'descr': 'descr',
-    'name': 'name'
-}
-
-
-def get_attributes(keymap, mo):
-    resource = {}
+def get_existing(moDir, tenant, name):
+    existing = {}
+    mo = moDir.lookupByDn('uni/tn-{0}/ap-{1}'.format(tenant, name))
     if mo:
-        for mine, cobra in keymap.iteritems():
-            value = getattr(mo, cobra)
-            if value:
-                resource[mine] = value
-    return resource
-
-
-def get_existing(moDir, name):
-    mo = moDir.lookupByDn('uni/tn-{0}'.format(name))
-    return get_attributes(KEY_MAP, mo)
+        existing = dict(name=name, descr=mo.descr)
+    return existing
 
 
 def main():
@@ -120,6 +111,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', required=True),
+            tenant=dict(type='str', required=True),
             descr=dict(type='str'),
             state=dict(choices=['present', 'absent'], required=True),
             host=dict(required=True),
@@ -138,6 +130,7 @@ def main():
     state = module.params['state'].lower()
 
     name = module.params['name']
+    tenant = module.params['tenant']
     descr = module.params['descr']
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -146,47 +139,46 @@ def main():
     moDir = MoDirectory(session)
     moDir.login()
 
-    uniMo = moDir.lookupByDn('uni')
+    tenant_mo = moDir.lookupByDn('uni/tn-{0}'.format(tenant))
+    if not tenant_mo:
+        print module.fail_json(msg='tenant needs to be created first')
 
-    existing = get_existing(moDir, name)
+    existing = get_existing(moDir, tenant, name)
 
-    args = dict(name=name, descr=descr)
+    args = dict(descr=descr)
 
     proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
     delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
 
-    new_mo = None
-
+    resource_mo = None
     if state == 'present':
         if delta or not existing:
-            config_args = {}
-            for key, value in KEY_MAP.iteritems():
+            resource_args = {}
+            for key, value in proposed.iteritems():
                 config_value = delta.get(key, existing.get(key, None))
                 if config_value:
-                    config_args[value] = config_value
-            if 'name' in config_args.keys():
-                config_args.pop('name')
-            new_mo = Tenant(uniMo, name=name, **config_args)
+                    resource_args[key] = config_value
+            resource_mo = Ap(tenant_mo, name=name, **resource_args)
 
     elif state == 'absent':
         if existing:
-            new_mo = Tenant(uniMo, name)
-            new_mo.delete()
+            resource_mo = Ap(tenant_mo, name=name)
+            resource_mo.delete()
 
     changed = False
     results = {}
     xmldoc = ''
-    if new_mo:
-        xmldoc = toXMLStr(new_mo)
+    if resource_mo:
+        xmldoc = toXMLStr(resource_mo)
         if module.check_mode:
             module.exit_json(changed=True, xmldoc=xmldoc)
         else:
             changed = True
-            tenantCfg = ConfigRequest()
-            tenantCfg.addMo(new_mo)
-            moDir.commit(tenantCfg)
-            results['new'] = get_existing(moDir, name)
+            config_req = ConfigRequest()
+            config_req.addMo(resource_mo)
+            moDir.commit(config_req)
+            results['new'] = get_existing(moDir, tenant, name)
 
     results['proposed'] = proposed
     results['existing'] = existing
