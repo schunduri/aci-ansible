@@ -8,6 +8,10 @@ Current modules include:
 * aci_bridge_domain
 * aci_contract
 * aci_contract_subject
+* aci_anp
+* aci_epg
+* aci_filter
+* aci_filter_entry
 
 The best way to see examples are in the `aci-demo.yml` playbook as well as the examples located within the modules.
 
