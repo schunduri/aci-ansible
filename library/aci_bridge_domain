@@ -99,7 +99,7 @@ options:
         description:
             - Dictates connection protocol to use
         required: false
-        default: http
+        default: https
         choices: ['http', 'https']
         aliases: []
 '''

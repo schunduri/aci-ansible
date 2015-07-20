@@ -3,7 +3,7 @@
 
 ---
 ### Requirements
-* ACI Fabric 1.0(3f)+
+ * ACI Fabric 1.0(3f)+
 * Cobra SDK
 
 ---
@@ -36,19 +36,19 @@ Manages filter entries that will be assigned to a filter
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| dest_from_port  |   no  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| dest_from_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | name  |   yes  |  | <ul></ul> |  Name of the entry  |
-| dest_to_port  |   no  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
+| dest_to_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
 | proto  |   no  |  | <ul> <li>eigrp</li>  <li>egp</li>  <li>icmp</li>  <li>igmp</li>  <li>igp</li>  <li>l2tp</li>  <li>ospfigp</li>  <li>pim</li>  <li>tcp</li>  <li>udp</li> </ul> |  Protocol to be matched against for this entry  |
 | allow_fragment  |   no  |  | <ul> <li>yes</li>  <li>no</li> </ul> |  Matches allow_fragment option from APIC  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | filter  |   yes  |  | <ul></ul> |  Name of the filter this entry will be part of  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the entry  |
-| src_to_port  |   no  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
-| src_from_port  |   yes  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
+| src_to_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
+| src_from_port  |   yes  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
 | tenant  |   yes  |  | <ul></ul> |  Name of the tenant this entry will be part of  |
 | tcp_session_rules  |   no  |  | <ul> <li>ack</li>  <li>syn</li>  <li>est</li>  <li>rst</li>  <li>fin</li> </ul> |  Acknowledgment, Synchronize, Established, Reset, Finish  |
 
@@ -100,13 +100,13 @@ Manages top level filter objects
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the filter  |
 | descr  |   no  |  | <ul></ul> |  description of filter  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the filter  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this filter will be part of  |
 
 
@@ -145,15 +145,15 @@ Manages bridge domains in an ACI fabric
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
 | subnet  |   no  |  | <ul></ul> |  name of subnet that is paired to bridge domain  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | descr  |   no  |  | <ul></ul> |  description of bridge domain  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the bridge domain  |
 | context  |   yes  |  | <ul></ul> |  name of context (private network / VRF)  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this bridge domain will be part of  |
 
 
@@ -198,15 +198,15 @@ Manages initial contracts (does not include contract subjs)
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the contract  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
 | descr  |   no  |  | <ul></ul> |  description of contract  |
 | scope  |   no  |  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contract  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
 
 
@@ -251,13 +251,13 @@ Manage tenants in an ACI fabric
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | name  |   yes  |  | <ul></ul> |  Name of tenant  |
 | descr  |   no  |  | <ul></ul> |  description of tenant  |
 | state  |   yes  |  | <ul> <li>enabled</li>  <li>disabled</li> </ul> |  Desired state of the tenant  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 
 
  
@@ -292,13 +292,13 @@ Direct access to the APIC API
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
 | config_file  |   no  |  | <ul></ul> |  name of the absolute path of the filname that includes the body of the http request being sent to the ACI fabric  |
 | uri  |   yes  |  | <ul></ul> |  uri being used to execute API calls. Must end in .xml or .json  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | action  |   yes  |  | <ul> <li>post</li>  <li>get</li> </ul> |  http verb, i.e. post or get  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 
 
  
@@ -341,9 +341,9 @@ Manages ACI end point groups and related contracts
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the application network profile  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for epg  |
 | vmm_domain  |   no  |  | <ul></ul> |  desired vmm domain or list of vmm domains (VMware only)  |
@@ -412,13 +412,13 @@ Manages contract subjects
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
 | in_filters  |   no  |  | <ul></ul> |  Filter or list of filters being applied inbound when the contract is applied as a policy between EPGs  |
 | out_filters  |   no  |  | <ul></ul> |  Filter or list of filters being applied inbound when the contract is applied as a policy between EPGs  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of contract subject  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for subject (not per direction filters)  |
-| apply_both_directions  |   no  |  | <ul> <li>true</li>  <li>false</li>  <li>yes</li>  <li>no</li> </ul> |  determines if the contract applies to both inbound and outbound traffic  |
+| apply_both_directions  |   no  |  True  | <ul> <li>true</li>  <li>false</li>  <li>yes</li>  <li>no</li> </ul> |  determines if the contract applies to both inbound and outbound traffic  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract subject  |
 | contract  |   yes  |  | <ul></ul> |  Name of contract this subject will be applied to  |
 | svc_graph  |   no  |  | <ul></ul> |  distinguished name of the service graph. The service graph is an image that shows the relationship between contracts and subjects. Not yet supported in this module.  |
@@ -426,7 +426,7 @@ Manages contract subjects
 | reverse_filter_ports  |   no  |  | <ul> <li>true</li>  <li>false</li>  <li>yes</li>  <li>no</li> </ul> |  Apply the same subject rule to the reverse filter ports when the contract applies in both directions.  apply_both_directions must be true to use this flag  |
 | filters  |   no  |  | <ul></ul> |  Filter or list of filters being applied to the contract subject. To be used when a single filter is being applied in both directions.  |
 | descr  |   no  |  | <ul></ul> |  description of contract subject  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  Name of tenant the contract and subject will be applied to  |
 
 
@@ -473,13 +473,13 @@ Manage private networks, contexts, in an ACI fabric
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of context (private network / VRF)  |
 | descr  |   no  |  | <ul></ul> |  description of context (private network)  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the context  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant the private network will be associated to  |
 
 
@@ -520,13 +520,13 @@ Manage top level application network profile objects
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the application network profile  |
 | descr  |   no  |  | <ul></ul> |  description of the application network profile  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the application network profile  |
-| password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
+| state  |   yes  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the application network profile  |
+| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this application network profile will be part of  |
 
 
