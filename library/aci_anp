@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,14 @@ DOCUMENTATION = '''
 ---
 
 module: aci_anp
-short_description: Manage top level application network profile object
+short_description: Manage top level application network profile objects
 description:
-    - Manage top level application network profile object (not EPGs)
+    - Manage top level application network profile object, i.e. this does
+      not manage EPGs.
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 options:
     name:
         description:
@@ -52,12 +53,12 @@ options:
         description:
             - Desired state of the contract
         required: true
-        default: null
+        default: present
         choices: ['present','absent']
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -87,15 +88,21 @@ options:
 
 EXAMPLES = '''
 
+# ensure application network profile exists
+- aci_anp: name=3Tier_App tenant=ACILab state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+
 '''
 import socket
 
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.mit.request import DnQuery
-from cobra.model.fv import Ap
-from cobra.internal.codec.xmlcodec import toXMLStr
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.fv import Ap
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 def get_existing(moDir, tenant, name):
@@ -113,7 +120,7 @@ def main():
             name=dict(type='str', required=True),
             tenant=dict(type='str', required=True),
             descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -121,6 +128,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']

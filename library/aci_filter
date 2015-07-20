@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,13 @@ DOCUMENTATION = '''
 ---
 
 module: aci_filter
-short_description: Manage top level filter object
+short_description: Manages top level filter objects
 description:
-    - Manages top level filter objects (not each entry)
+    - Manages top level filter objects, i.e. not each entry
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 options:
     name:
         description:
@@ -57,7 +57,7 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -87,15 +87,26 @@ options:
 
 EXAMPLES = '''
 
+# name: ensure filters exist
+aci_filter: name={{ item }} tenant=ACILab host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+with_items:
+  - Web_Filter
+  - App_Filter
+  - DB_Filter
+
+
 '''
 import socket
 
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.mit.request import DnQuery
-from cobra.model.vz import Filter
-from cobra.internal.codec.xmlcodec import toXMLStr
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.vz import Filter
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 def get_existing(moDir, tenant, name):
@@ -113,7 +124,7 @@ def main():
             name=dict(type='str', required=True),
             tenant=dict(type='str', required=True),
             descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -121,6 +132,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']

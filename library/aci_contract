@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,18 +19,18 @@ DOCUMENTATION = '''
 ---
 
 module: aci_contract
-short_description: Manage initial contracts (does not include contract subjs)
+short_description: Manages initial contracts (does not include contract subjs)
 description:
     - Manages contract resource, but does not include subjects although
       subjects can be removed using this module
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 notes:
     - Tenant and context must be exist prior to using this module
-    - state=absent removes complete contract including contract subjects
-      that may have been deployed with the aci_contract_subject module
+    - state=absent removes complete contract including the contract subjects
+      that were deployed with the aci_contract_subject module
 options:
     name:
         description:
@@ -106,10 +106,10 @@ options:
 
 EXAMPLES = '''
 # ensure contract exists
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 # ensure contract exists with added params
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 prio=level2 scope=context state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 prio=level2 scope=context host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 # ensure contract does not exist
 - aci_contract: name=web-contract tenant=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
@@ -117,12 +117,15 @@ EXAMPLES = '''
 '''
 import socket
 
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.model.vz import BrCP
-from cobra.mit.request import DnQuery
-from cobra.internal.codec.xmlcodec import toXMLStr
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.vz import BrCP
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 KEY_MAP = {
@@ -157,7 +160,7 @@ def main():
                                 'global', 'tenant']),
             prio=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
             descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -165,6 +168,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']

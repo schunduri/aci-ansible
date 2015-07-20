@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jedelman8@gmail.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
+# Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,18 +21,18 @@ DOCUMENTATION = '''
 module: aci_context
 short_description: Manage private networks, contexts, in an ACI fabric
 description:
-    - Offers ability to manage private networks. Each
-      context is a private network associated to a tenant
+    - Offers ability to manage private networks. Each context is a private
+      network associated to a tenant, i.e. VRF
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 notes:
     - Tenant must be exist prior to using this module
 options:
     name:
         description:
-            - Name of context (private network)
+            - Name of context (private network / VRF)
         required: true
         default: null
         choices: []
@@ -46,7 +47,7 @@ options:
     tenant:
         description:
             - name of tenant the private network will be associated to
-        required: false
+        required: true
         default: null
         choices: []
         aliases: []
@@ -59,7 +60,7 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -89,20 +90,25 @@ options:
 
 EXAMPLES = '''
 # ensure context for tenant exists (private network)
-- aci_context: name=c1_priv_network descr='customer 1 VRF' tenant=customer_1 state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+- aci_context: name=ACILab_VRF descr='ACILab VRF' tenant=ACILab host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
-# ensure context for tenant does not exist
-- aci_context: name=c1_priv_network tenant=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+# ensure context for tenant exists (private network)
+- aci_context: name=ACILab_VRF tenant=ACILab state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+
 
 '''
 import socket
 
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.model.fv import Tenant
-from cobra.model.fv import Ctx
-from cobra.internal.codec.xmlcodec import toXMLStr
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.fv import Tenant
+    from cobra.model.fv import Ctx
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 KEY_MAP = {
@@ -133,7 +139,7 @@ def main():
             name=dict(type='str', required=True),
             tenant=dict(type='str', required=True),
             descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -141,6 +147,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']

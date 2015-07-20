@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,14 +24,17 @@ description:
     - Manages contract subjects that are a necessity for contracts
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 notes:
     - Tenant & Contract must be exist prior to using this module
-    - YAML syntax required within the playbook for this module
+    - filters, in_filters, and out_filters can be a single filter or a list of
+      filters.  In either case, it is the desired filters that should be
+      applied to the contract subject.  This means if filters are already
+      assigned and not in the new list, they will be removed.
     - QOS class per filter "group" when not applying the same group
-      in both directions is not yet supported
-    - Service graph coming soon!
+      of filters in not yet supported
+    - Service is currently not supported.
 options:
     name:
         description:
@@ -72,7 +75,8 @@ options:
         aliases: []
     apply_both_directions:
         description:
-            - determines if the contract applies to both inbound and outbound traffic
+            - determines if the contract applies to both inbound and
+              outbound traffic
         required: false
         default: True
         choices: ['true', 'false', 'yes', 'no']
@@ -84,11 +88,36 @@ options:
         default: null
         choices: ['unspecified', 'level1', 'level2', 'level3']
         aliases: []
+    filters:
+        description:
+            - Filter or list of filters being applied to the contract subject.
+              To be used when a single filter is being applied in both
+              directions.
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    in_filters:
+        description:
+            - Filter or list of filters being applied inbound when the
+              contract is applied as a policy between EPGs
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    out_filters:
+        description:
+            - Filter or list of filters being applied inbound when the
+              contract is applied as a policy between EPGs
+        required: false
+        default: null
+        choices: []
+        aliases: []
     svc_graph:
         description:
             - distinguished name of the service graph. The service graph is an
               image that shows the relationship between contracts and subjects.
-              Not yet supported.
+              Not yet supported in this module.
         required: false
         default: null
         choices: []
@@ -132,34 +161,32 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure subject exists
-  aci_contract_subject:
-    name: web-subject
-    contract: web-contract
-    filters: "{{ filter1 }}"
-    tenant: customer_1
-    state: present
-    host: "{{ inventory_hostname }}"
-    apply_both_directions: true
-    descr: 'subj description'
 
-# ensure contract subject does not exist
-- aci_contract_subject: name=web-subject contract=web-contract tenant=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+# ensure contract subject for web exists
+- aci_contract_subject: name=web_subject contract=Web_Con filters=Web_Filter tenant=ACILab host={{ inventory_hostname }}
+
+# created a subject using a different filter for each direction
+- aci_contract_subject: name=web_subject contract=Web_Con in_filters=arp out_filters=Web_Filter apply_both_directions=false descr='web subj2' tenant=ACILab host={{ inventory_hostname }}
 
 '''
 
 
 import socket
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.model.vz import Subj
-from cobra.model.vz import InTerm
-from cobra.model.vz import OutTerm
-from cobra.model.vz import RsSubjFiltAtt
-from cobra.model.vz import RsFiltAtt
-from cobra.mit.request import DnQuery
-from cobra.internal.codec.xmlcodec import toXMLStr
+
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.vz import Subj
+    from cobra.model.vz import InTerm
+    from cobra.model.vz import OutTerm
+    from cobra.model.vz import RsSubjFiltAtt
+    from cobra.model.vz import RsFiltAtt
+    from cobra.mit.request import DnQuery
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 KEY_MAP = {
@@ -333,11 +360,11 @@ def main():
             prio=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
             apply_both_directions=dict(choices=BOOLEANS, type='bool'),
             reverse_filter_ports=dict(choices=BOOLEANS, type='bool'),
-            filters=dict(type='list'),
-            in_filters=dict(type='list'),
-            out_filters=dict(type='list'),
+            filters=dict(),
+            in_filters=dict(),
+            out_filters=dict(),
             svc_graph=dict(type='str'),
-            state=dict(choices=['present', 'absent'], default=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -345,6 +372,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']
@@ -387,7 +417,9 @@ def main():
         if in_filters or out_filters:
             module.fail_json(msg='in_filters and out_filters only to be used'
                              + '\nwith apply_both_directions=false, you need'
-                             + 'to\n use param filters')
+                             + ' to\n use the filters param if you want to'
+                             + ' \nset apply_both_directions=false or use same'
+                             + ' \nfilter(s) for in_filters and out_filters')
 
     if apply_both_directions is False and reverse_filter_ports:
         module.fail_json(msg='when apply_both_directions=false, \n ' +
@@ -421,17 +453,26 @@ def main():
                                                   proposed_filters, tenant,
                                                   contract, name)
 
-        if apply_both_directions is not None:
-            if existing.get('apply_both_directions') != apply_both_directions:
-                module.fail_json(msg='cannot change directions; subject needs'
-                                 + '\nto be removed first')
+        if state == 'present':
+            if apply_both_directions is not None:
+                if existing.get('apply_both_directions') != \
+                   apply_both_directions:
+                        module.fail_json(msg='cannot change directions;'
+                                         + ' subject needs \nto be removed'
+                                         + ' first')
+            if existing_filters.get('in_filters') or \
+               existing_filters.get('out_filters'):
+                if filters:
+                    module.fail_json(msg='when switching from in/out filters'
+                                     + ' to filters\n, you need to remove the'
+                                     + ' subject and then re-add it')
     else:
         existing_filters = dict(filters=[], in_filters=[],
                                 out_filters=[])
         existing = {}
 
     delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
-    module.exit_json(aa=delta, bb=proposed, cc=existing)
+
     delta_objects, remove_objects = get_delta_objects(proposed_filters,
                                                       existing_filters)
 
@@ -448,8 +489,11 @@ def main():
                 sub_args[key] = value
             # issue with committing this as boolean, so converting it to str
             # hasn't happened with other api calls, maybe a bug?
-            if sub_args.get('revFltPorts') is not None:
-                sub_args['revFltPorts'] = str(sub_args['revFltPorts']).lower()
+            if sub_args.get('reverse_filter_ports') is not None:
+                sub_args['revFltPorts'] = str(
+                    sub_args['reverse_filter_ports']
+                    ).lower()
+                sub_args.pop('reverse_filter_ports')
             new_sub_mo = Subj(con_mo, name=name, **sub_args)
 
             for type_filter, bool_condition in delta_objects.iteritems():

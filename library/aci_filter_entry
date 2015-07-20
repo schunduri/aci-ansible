@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,22 +19,25 @@ DOCUMENTATION = '''
 ---
 
 module: aci_filter_entry
-short_description: Manage individual filter entries
+short_description: Manages filter entries that will be assigned to a filter
 description:
-    - Manage individual filter entries
+    - Manages filter entries that will be assigned to an already created filter
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 notes:
   - If only a single source port is required (not to and from),
     either the src_to_port or src_from_port could be used.
-    Same for destination.
+  - If only a single dest port is required (not to and from),
+    either the dest_to_port or dest_from_port could be used.
+  - When neither *_to_port or *_from_port is not used, it becomes
+    unspecified (as in ACI fabric)
   - If ACI supports named protocols, the module is not idempotent,
     with the exception of http/https.
   - Only a single tcp session rule is supported per entry
   - If proto does not equal tcp/udp, the src/dest and tcp_session
-    params are not used even if set.
+    params are not used, even if set.
 options:
     name:
         description:
@@ -60,7 +63,7 @@ options:
     proto:
         description:
             - Name of the entry
-        required: true
+        required: false
         default: null
         choices: ['eigrp', 'egp', 'icmp', 'igmp', 'igp', 'l2tp', 'ospfigp',
                   'pim', 'tcp', 'udp']
@@ -68,7 +71,7 @@ options:
     allow_fragment:
         description:
             - Name of the filter this entry will be part of
-        required: true
+        required: false
         default: null
         choices: ['yes', 'no']
         aliases: []
@@ -96,7 +99,7 @@ options:
     dest_from_port:
         description:
             - supports keywords as APIC does, i.e. unspecified, https, http
-        required: true
+        required: false
         default: unspecified
         choices: []
         aliases: []
@@ -104,7 +107,7 @@ options:
         description:
             - Acknowledgment, Synchronize, Established,
               Reset, Finish
-        required: true
+        required: false
         default: null
         choices: ['ack', 'syn', 'est', 'rst', 'fin']
         aliases: []
@@ -147,14 +150,25 @@ options:
 
 EXAMPLES = '''
 
+# entry for web filter
+- aci_filter_entry: name=web_filter proto=tcp tenant=ACILab filter=Web_Filter dest_to_port=80 state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+
+# entry showing varying src/dest ports
+- aci_filter_entry: name=entry2 proto=tcp tenant=ACILab filter=Web_Filter src_to_port=unspecified dest_from_port=500 dest_to_port=1000 tcp_session_rules=rst host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+
 '''
 import socket
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.mit.request import DnQuery
-from cobra.model.vz import Entry
-from cobra.internal.codec.xmlcodec import toXMLStr
+
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.vz import Entry
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
+
 
 KEY_MAP = {
     'ether_type': 'etherT',
@@ -199,7 +213,7 @@ def main():
             allow_fragment=dict(choices=['yes', 'no']),
             proto=dict(choices=['eigrp', 'egp', 'icmp', 'igmp', 'igp',
                                 'l2tp', 'ospfigp', 'pim', 'tcp',
-                                'udp'], required=True),
+                                'udp'], required=False),
             src_to_port=dict(type='str', required=False,
                              default='unspecified'),
             src_from_port=dict(type='str', required=False,
@@ -210,7 +224,7 @@ def main():
                                 default='unspecified'),
             tcp_session_rules=dict(choices=['ack', 'syn', 'est', 'rst', 'fin'],
                                    required=False),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -218,6 +232,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']
@@ -248,6 +265,10 @@ def main():
     if not filter_mo:
         print module.fail_json(
             msg='filter and tenant needs to be created first')
+
+    if state == 'present':
+        if not proto:
+            module.fail_json(msg='proto param is required')
 
     if proto in ['eigrp', 'egp', 'icmp', 'igmp', 'igp',
                  'l2tp', 'ospfigp', 'pim']:

@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jedelman8@gmail.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
+# Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,8 +24,8 @@ description:
     - Offers ability to manage tenants
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
 options:
     name:
         description:
@@ -49,7 +50,7 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -79,19 +80,24 @@ options:
 
 EXAMPLES = '''
 # ensure tenant exists
-- aci_tenant: name=customer_1 descr='tenant by Ansible' state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+- aci_tenant: name=ACILab descr='tenant by Ansible' host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 # ensure tenant does not exist on system
-- aci_tenant: name=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+- aci_tenant: name=ACILab state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 '''
 
 import socket
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.model.fv import Tenant
-from cobra.internal.codec.xmlcodec import toXMLStr
+
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.model.fv import Tenant
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 KEY_MAP = {
@@ -121,7 +127,7 @@ def main():
         argument_spec=dict(
             name=dict(type='str', required=True),
             descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -129,6 +135,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']

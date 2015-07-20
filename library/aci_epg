@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2015 Jason Edelman <jason@nteworktocode.com>
+# Copyright 2015 Jason Edelman <jason@networktocode.com>
 # Network to Code, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +24,14 @@ description:
     - Manages ACI end point groups and related contracts
 author: Jason Edelman (@jedelman8)
 requirements:
-    - check version requirements ==============================================
-    - Cobra SDK version =======================================================
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
+notes:
+    - provided_contracts, consumed_contracts, vmm_domain, and bridge_domain
+      could be supplied as a string or a list of names for that particular
+      resource.  They also ensure each are in the desired state.
+      This means if resources are already assigned and not in the new list
+      (or str), they will be removed.
 options:
     name:
         description:
@@ -64,15 +70,29 @@ options:
         aliases: []
     provided_contracts:
         description:
-            - list of provided contracts
-        required: true
+            - desired contract or list of provided contracts
+        required: false
         default: null
         choices: []
         aliases: []
     consumed_contracts:
         description:
-            - list of provided contracts
-        required: true
+            - desired contract or list of consumed contracts
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    bridge_domain:
+        description:
+            - desired bridge domain or list of bridge domains
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    vmm_domain:
+        description:
+            - desired vmm domain or list of vmm domains (VMware only)
+        required: false
         default: null
         choices: []
         aliases: []
@@ -85,7 +105,7 @@ options:
         aliases: []
     host:
         description:
-            - IP Address or hostname of APIC (resolvable by Ansible control host)
+            - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
@@ -115,15 +135,43 @@ options:
 
 EXAMPLES = '''
 
+# ensure web epg exists
+- aci_epg:
+    name: Web_EPG
+    consumed_contracts: Web_Con
+    provided_contracts: App_Con
+    bridge_domain: ACILab_BD1
+    vmm_domain: My-vCenter
+    anp: 3Tier_App
+    tenant: ACILab
+    state: present
+    host: "{{ inventory_hostname }}"
+
+# ensure app epg exists
+- aci_epg:
+    name: App_EPG
+    consumed_contracts: App_Con
+    provided_contracts: DB_Con
+    bridge_domain: ACILab_BD1
+    vmm_domain: My-vCenter
+    anp: 3Tier_App
+    tenant: ACILab
+    state: present
+    host: "{{ inventory_hostname }}"
+
 '''
 import socket
 
-from cobra.mit.access import MoDirectory
-from cobra.mit.session import LoginSession
-from cobra.mit.request import ConfigRequest
-from cobra.mit.request import DnQuery
-from cobra.model.fv import Ap, AEPg, RsCons, RsProv, RsBd, RsDomAtt
-from cobra.internal.codec.xmlcodec import toXMLStr
+try:
+    HAS_COBRA = True
+    from cobra.mit.access import MoDirectory
+    from cobra.mit.session import LoginSession
+    from cobra.mit.request import ConfigRequest
+    from cobra.mit.request import DnQuery
+    from cobra.model.fv import AEPg, RsCons, RsProv, RsBd, RsDomAtt
+    from cobra.internal.codec.xmlcodec import toXMLStr
+except ImportError as ie:
+    HAS_COBRA = False
 
 
 def get_existing(moDir, tenant, anp, name):
@@ -278,7 +326,7 @@ def main():
             provided_contracts=dict(),
             bridge_domain=dict(),
             vmm_domain=dict(),
-            state=dict(choices=['present', 'absent'], required=True),
+            state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -286,6 +334,9 @@ def main():
         ),
         supports_check_mode=True
     )
+    if not HAS_COBRA:
+        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
+                         error=str(ie))
 
     username = module.params['username']
     password = module.params['password']
