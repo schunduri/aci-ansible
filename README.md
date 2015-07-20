@@ -255,7 +255,7 @@ Manage tenants in an ACI fabric
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | name  |   yes  |  | <ul></ul> |  Name of tenant  |
 | descr  |   no  |  | <ul></ul> |  description of tenant  |
-| state  |   yes  |  | <ul> <li>enabled</li>  <li>disabled</li> </ul> |  Desired state of the tenant  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the tenant  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 

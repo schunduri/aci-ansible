@@ -44,9 +44,9 @@ options:
     state:
         description:
             - Desired state of the tenant
-        required: true
-        default: null
-        choices: ['enabled','disabled']
+        required: false
+        default: present
+        choices: ['present','absent']
         aliases: []
     host:
         description:
