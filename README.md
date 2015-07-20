@@ -3,7 +3,7 @@
 
 ---
 ### Requirements
- * ACI Fabric 1.0(3f)+
+* ACI Fabric 1.0(3f)+
 * Cobra SDK
 
 ---
@@ -14,7 +14,7 @@
   * [aci_bridge_domain - manages bridge domains in an aci fabric](#aci_bridge_domain)
   * [aci_contract - manages initial contracts (does not include contract subjs)](#aci_contract)
   * [aci_tenant - manage tenants in an aci fabric](#aci_tenant)
-  * [aci_api - direct access to the apic api](#aci_api)
+  * [aci_rest - direct access to the apic api](#aci_rest)
   * [aci_epg - manages aci end point groups and related contracts](#aci_epg)
   * [aci_contract_subject - manages contract subjects](#aci_contract_subject)
   * [aci_context - manage private networks, contexts, in an aci fabric](#aci_context)
@@ -278,7 +278,7 @@ Manage tenants in an ACI fabric
 ---
 
 
-## aci_api
+## aci_rest
 Direct access to the APIC API
 
   * Synopsis
