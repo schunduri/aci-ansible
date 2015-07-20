@@ -540,5 +540,5 @@ Manage top level application network profile objects
 
 
 ---
-Created by Network to Code, LLC for HP Networking
+Created by Network to Code, LLC
 2015
