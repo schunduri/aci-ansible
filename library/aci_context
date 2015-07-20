@@ -53,7 +53,7 @@ options:
         aliases: []
     state:
         description:
-            - Desired state of the feature
+            - Desired state of the context
         required: true
         default: null
         choices: ['present','absent']
@@ -81,7 +81,7 @@ options:
         aliases: []
     protocol:
         description:
-            - Dictates connection protocol to use for NX-API
+            - Dictates connection protocol to use
         required: false
         default: http
         choices: ['http', 'https']

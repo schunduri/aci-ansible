@@ -34,7 +34,7 @@ notes:
 options:
     name:
         description:
-            - Name of context (private network)
+            - Name of the bridge domain
         required: true
         default: null
         choices: []
@@ -69,7 +69,7 @@ options:
         aliases: []
     state:
         description:
-            - Desired state of the feature
+            - Desired state of the bridge domain
         required: true
         default: null
         choices: ['present','absent']
@@ -97,7 +97,7 @@ options:
         aliases: []
     protocol:
         description:
-            - Dictates connection protocol to use for NX-API
+            - Dictates connection protocol to use
         required: false
         default: http
         choices: ['http', 'https']

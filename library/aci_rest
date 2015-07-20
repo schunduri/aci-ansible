@@ -19,10 +19,9 @@ DOCUMENTATION = '''
 ---
 
 module: aci_api
-short_description: Direct access to the ACI API using XML
+short_description: Direct access to the APIC API
 description:
-    - Offers direct access to the ACI API using XML objects
-      context is a private network associated to a tenant
+    - Offers direct access to the APIC API
 author: Jason Edelman (@jedelman8)
 requirements:
     - ACI Fabric 1.0(3f)+
@@ -75,7 +74,7 @@ options:
         aliases: []
     protocol:
         description:
-            - Dictates connection protocol to use for NX-API
+            - Dictates connection protocol to use
         required: false
         default: http
         choices: ['http', 'https']

@@ -3,7 +3,6 @@
 
 ---
 ### Requirements
-
 * ACI Fabric 1.0(3f)+
 * Cobra SDK
 
@@ -15,7 +14,7 @@
   * [aci_bridge_domain - manages bridge domains in an aci fabric](#aci_bridge_domain)
   * [aci_contract - manages initial contracts (does not include contract subjs)](#aci_contract)
   * [aci_tenant - manage tenants in an aci fabric](#aci_tenant)
-  * [aci_api - direct access to the aci api using xml](#aci_api)
+  * [aci_api - direct access to the apic api](#aci_api)
   * [aci_epg - manages aci end point groups and related contracts](#aci_epg)
   * [aci_contract_subject - manages contract subjects](#aci_contract_subject)
   * [aci_context - manage private networks, contexts, in an aci fabric](#aci_context)
@@ -39,11 +38,11 @@ Manages filter entries that will be assigned to a filter
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
 | dest_from_port  |   no  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | name  |   yes  |  | <ul></ul> |  Name of the entry  |
 | dest_to_port  |   no  |  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| proto  |   no  |  | <ul> <li>eigrp</li>  <li>egp</li>  <li>icmp</li>  <li>igmp</li>  <li>igp</li>  <li>l2tp</li>  <li>ospfigp</li>  <li>pim</li>  <li>tcp</li>  <li>udp</li> </ul> |  Name of the entry  |
-| allow_fragment  |   no  |  | <ul> <li>yes</li>  <li>no</li> </ul> |  Name of the filter this entry will be part of  |
+| proto  |   no  |  | <ul> <li>eigrp</li>  <li>egp</li>  <li>icmp</li>  <li>igmp</li>  <li>igp</li>  <li>l2tp</li>  <li>ospfigp</li>  <li>pim</li>  <li>tcp</li>  <li>udp</li> </ul> |  Protocol to be matched against for this entry  |
+| allow_fragment  |   no  |  | <ul> <li>yes</li>  <li>no</li> </ul> |  Matches allow_fragment option from APIC  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | filter  |   yes  |  | <ul></ul> |  Name of the filter this entry will be part of  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the entry  |
@@ -70,6 +69,7 @@ Manages filter entries that will be assigned to a filter
 
 
 #### Notes
+
 - If only a single source port is required (not to and from), either the src_to_port or src_from_port could be used.
 
 - If only a single dest port is required (not to and from), either the dest_to_port or dest_from_port could be used.
@@ -101,11 +101,11 @@ Manages top level filter objects
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the filter  |
 | descr  |   no  |  | <ul></ul> |  description of filter  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
+| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the filter  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this filter will be part of  |
 
@@ -147,11 +147,11 @@ Manages bridge domains in an ACI fabric
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
 | subnet  |   no  |  | <ul></ul> |  name of subnet that is paired to bridge domain  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
-| name  |   yes  |  | <ul></ul> |  Name of context (private network)  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | descr  |   no  |  | <ul></ul> |  description of bridge domain  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the feature  |
+| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the bridge domain  |
 | context  |   yes  |  | <ul></ul> |  name of context (private network / VRF)  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this bridge domain will be part of  |
@@ -173,6 +173,7 @@ Manages bridge domains in an ACI fabric
 
 
 #### Notes
+
 - Tenant and context must be exist prior to using this module
 
 - One subnet can be added per task (per module call)
@@ -198,13 +199,13 @@ Manages initial contracts (does not include contract subjs)
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the contract  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
 | descr  |   no  |  | <ul></ul> |  description of contract  |
-| scope  |   no  |  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contrcact  |
+| scope  |   no  |  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contract  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
 
@@ -227,6 +228,7 @@ Manages initial contracts (does not include contract subjs)
 
 
 #### Notes
+
 - Tenant and context must be exist prior to using this module
 
 - state=absent removes complete contract including the contract subjects that were deployed with the aci_contract_subject module
@@ -250,7 +252,7 @@ Manage tenants in an ACI fabric
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | name  |   yes  |  | <ul></ul> |  Name of tenant  |
 | descr  |   no  |  | <ul></ul> |  description of tenant  |
 | state  |   yes  |  | <ul> <li>enabled</li>  <li>disabled</li> </ul> |  Desired state of the tenant  |
@@ -277,14 +279,14 @@ Manage tenants in an ACI fabric
 
 
 ## aci_api
-Direct access to the ACI API using XML
+Direct access to the APIC API
 
   * Synopsis
   * Options
   * Examples
 
 #### Synopsis
- Offers direct access to the ACI API using XML objects context is a private network associated to a tenant
+ Offers direct access to the APIC API
 
 #### Options
 
@@ -295,7 +297,7 @@ Direct access to the ACI API using XML
 | uri  |   yes  |  | <ul></ul> |  uri being used to execute API calls. Must end in .xml or .json  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | action  |   yes  |  | <ul> <li>post</li>  <li>get</li> </ul> |  http verb, i.e. post or get  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 
 
@@ -318,6 +320,7 @@ Direct access to the ACI API using XML
 
 
 #### Notes
+
 - Tenant must be exist prior to using this module
 
 
@@ -340,12 +343,12 @@ Manages ACI end point groups and related contracts
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the application network profile  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for epg  |
 | vmm_domain  |   no  |  | <ul></ul> |  desired vmm domain or list of vmm domains (VMware only)  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
+| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the epg  |
 | anp  |   yes  |  | <ul></ul> |  name of the application profile this will be part of  |
 | descr  |   no  |  | <ul></ul> |  description of the application network profile  |
 | consumed_contracts  |   no  |  | <ul></ul> |  desired contract or list of consumed contracts  |
@@ -388,6 +391,7 @@ Manages ACI end point groups and related contracts
 
 
 #### Notes
+
 - provided_contracts, consumed_contracts, vmm_domain, and bridge_domain could be supplied as a string or a list of names for that particular resource.  They also ensure each are in the desired state. This means if resources are already assigned and not in the new list (or str), they will be removed.
 
 
@@ -411,7 +415,7 @@ Manages contract subjects
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
 | in_filters  |   no  |  | <ul></ul> |  Filter or list of filters being applied inbound when the contract is applied as a policy between EPGs  |
 | out_filters  |   no  |  | <ul></ul> |  Filter or list of filters being applied inbound when the contract is applied as a policy between EPGs  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of contract subject  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for subject (not per direction filters)  |
 | apply_both_directions  |   no  |  | <ul> <li>true</li>  <li>false</li>  <li>yes</li>  <li>no</li> </ul> |  determines if the contract applies to both inbound and outbound traffic  |
@@ -442,6 +446,7 @@ Manages contract subjects
 
 
 #### Notes
+
 - Tenant & Contract must be exist prior to using this module
 
 - filters, in_filters, and out_filters can be a single filter or a list of filters.  In either case, it is the desired filters that should be applied to the contract subject.  This means if filters are already assigned and not in the new list, they will be removed.
@@ -469,11 +474,11 @@ Manage private networks, contexts, in an ACI fabric
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of context (private network / VRF)  |
 | descr  |   no  |  | <ul></ul> |  description of context (private network)  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the feature  |
+| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the context  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant the private network will be associated to  |
 
@@ -494,6 +499,7 @@ Manage private networks, contexts, in an ACI fabric
 
 
 #### Notes
+
 - Tenant must be exist prior to using this module
 
 
@@ -515,11 +521,11 @@ Manage top level application network profile objects
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  | <ul></ul> |  Username used to login to the switch  |
-| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use for NX-API  |
+| protocol  |   no  |  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | name  |   yes  |  | <ul></ul> |  Name of the application network profile  |
 | descr  |   no  |  | <ul></ul> |  description of the application network profile  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
+| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the application network profile  |
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this application network profile will be part of  |
 
@@ -542,4 +548,5 @@ Manage top level application network profile objects
 
 ---
 Created by Network to Code, LLC
+For:
 2015

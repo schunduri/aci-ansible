@@ -71,7 +71,7 @@ options:
         aliases: []
     protocol:
         description:
-            - Dictates connection protocol to use for NX-API
+            - Dictates connection protocol
         required: false
         default: http
         choices: ['http', 'https']

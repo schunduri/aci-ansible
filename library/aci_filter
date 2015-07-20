@@ -50,7 +50,7 @@ options:
         aliases: []
     state:
         description:
-            - Desired state of the contract
+            - Desired state of the filter
         required: true
         default: null
         choices: ['present','absent']
@@ -78,7 +78,7 @@ options:
         aliases: []
     protocol:
         description:
-            - Dictates connection protocol to use for NX-API
+            - Dictates connection protocol to use
         required: false
         default: http
         choices: ['http', 'https']
