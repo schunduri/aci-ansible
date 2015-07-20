@@ -53,7 +53,9 @@ Manages filter entries that will be assigned to a filter
 | tcp_session_rules  |   no  |  | <ul> <li>ack</li>  <li>syn</li>  <li>est</li>  <li>rst</li>  <li>fin</li> </ul> |  Acknowledgment, Synchronize, Established, Reset, Finish  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # entry for web filter
@@ -107,7 +109,9 @@ Manages top level filter objects
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this filter will be part of  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # name: ensure filters exist
@@ -152,7 +156,9 @@ Manages bridge domains in an ACI fabric
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this bridge domain will be part of  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # ensure bridge domain 1 exists
@@ -202,7 +208,9 @@ Manages initial contracts (does not include contract subjs)
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 # ensure contract exists
 - aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 host={{ inventory_hostname }} username={{ user }} password={{ pass }}
@@ -249,7 +257,9 @@ Manage tenants in an ACI fabric
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 # ensure tenant exists
 - aci_tenant: name=ACILab descr='tenant by Ansible' host={{ inventory_hostname }} username={{ user }} password={{ pass }}
@@ -288,7 +298,9 @@ Direct access to the ACI API using XML
 | password  |   yes  |  | <ul></ul> |  Password used to login to the switch  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # add a tenant
@@ -341,7 +353,9 @@ Manages ACI end point groups and related contracts
 | provided_contracts  |   no  |  | <ul></ul> |  desired contract or list of provided contracts  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # ensure web epg exists
@@ -411,7 +425,9 @@ Manages contract subjects
 | tenant  |   yes  |  | <ul></ul> |  Name of tenant the contract and subject will be applied to  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # ensure contract subject for web exists
@@ -461,7 +477,9 @@ Manage private networks, contexts, in an ACI fabric
 | tenant  |   yes  |  | <ul></ul> |  name of tenant the private network will be associated to  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 # ensure context for tenant exists (private network)
 - aci_context: name=ACILab_VRF descr='ACILab VRF' tenant=ACILab host={{ inventory_hostname }} username={{ user }} password={{ pass }}
@@ -505,7 +523,9 @@ Manage top level application network profile objects
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this application network profile will be part of  |
 
 
- #### Examples
+ 
+#### Examples
+
 ```
 
 # ensure application network profile exists
@@ -522,5 +542,3 @@ Manage top level application network profile objects
 ---
 Created by Network to Code, LLC for HP Networking
 2015
-
-
