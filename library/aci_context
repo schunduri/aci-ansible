@@ -54,9 +54,9 @@ options:
     state:
         description:
             - Desired state of the context
-        required: true
-        default: null
-        choices: ['present','absent']
+        required: false
+        default: present
+        choices: ['present', 'absent']
         aliases: []
     host:
         description:

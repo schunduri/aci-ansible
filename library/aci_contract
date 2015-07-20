@@ -70,8 +70,8 @@ options:
     state:
         description:
             - Desired state of the contract
-        required: true
-        default: null
+        required: false
+        default: present
         choices: ['present','absent']
         aliases: []
     host:

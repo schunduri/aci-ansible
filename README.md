@@ -45,7 +45,7 @@ Manages filter entries that will be assigned to a filter
 | allow_fragment  |   no  |  | <ul> <li>yes</li>  <li>no</li> </ul> |  Matches allow_fragment option from APIC  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | filter  |   yes  |  | <ul></ul> |  Name of the filter this entry will be part of  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the entry  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the entry  |
 | src_to_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | src_from_port  |   yes  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
@@ -105,7 +105,7 @@ Manages top level filter objects
 | name  |   yes  |  | <ul></ul> |  Name of the filter  |
 | descr  |   no  |  | <ul></ul> |  description of filter  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the filter  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the filter  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this filter will be part of  |
 
@@ -151,7 +151,7 @@ Manages bridge domains in an ACI fabric
 | name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | descr  |   no  |  | <ul></ul> |  description of bridge domain  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the bridge domain  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the bridge domain  |
 | context  |   yes  |  | <ul></ul> |  name of context (private network / VRF)  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant this bridge domain will be part of  |
@@ -203,7 +203,7 @@ Manages initial contracts (does not include contract subjs)
 | name  |   yes  |  | <ul></ul> |  Name of the contract  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
 | descr  |   no  |  | <ul></ul> |  description of contract  |
 | scope  |   no  |  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contract  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
@@ -348,7 +348,7 @@ Manages ACI end point groups and related contracts
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for epg  |
 | vmm_domain  |   no  |  | <ul></ul> |  desired vmm domain or list of vmm domains (VMware only)  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the epg  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the epg  |
 | anp  |   yes  |  | <ul></ul> |  name of the application profile this will be part of  |
 | descr  |   no  |  | <ul></ul> |  description of the application network profile  |
 | consumed_contracts  |   no  |  | <ul></ul> |  desired contract or list of consumed contracts  |
@@ -419,7 +419,7 @@ Manages contract subjects
 | name  |   yes  |  | <ul></ul> |  Name of contract subject  |
 | prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qos class) for subject (not per direction filters)  |
 | apply_both_directions  |   no  |  True  | <ul> <li>true</li>  <li>false</li>  <li>yes</li>  <li>no</li> </ul> |  determines if the contract applies to both inbound and outbound traffic  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract subject  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract subject  |
 | contract  |   yes  |  | <ul></ul> |  Name of contract this subject will be applied to  |
 | svc_graph  |   no  |  | <ul></ul> |  distinguished name of the service graph. The service graph is an image that shows the relationship between contracts and subjects. Not yet supported in this module.  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC (resolvable by Ansible control host)  |
@@ -478,7 +478,7 @@ Manage private networks, contexts, in an ACI fabric
 | name  |   yes  |  | <ul></ul> |  Name of context (private network / VRF)  |
 | descr  |   no  |  | <ul></ul> |  description of context (private network)  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   yes  |  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the context  |
+| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the context  |
 | password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
 | tenant  |   yes  |  | <ul></ul> |  name of tenant the private network will be associated to  |
 
