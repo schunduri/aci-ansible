@@ -1,0 +1,193 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+
+module: aci_disable_physical_interface
+short_description: Direct access to the APIC API
+description:
+    - Offers direct access to the APIC API
+author:
+requirements:
+    - ACI Fabric 1.0(3f)+
+    - Cobra SDK
+notes:
+    - Physical Interface Must Exist Prior To Using This Module
+options:
+    state:
+        description:
+            - Used to check if being enabled or disabled
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    action:
+        description:
+            - http verb, i.e. post or get
+        required: true
+        default: null
+        choices: ['post', 'get']
+        aliases: []
+    pod_id:
+        description:
+            - APIC pod id
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    node_id:
+        description:
+            - Fabric node id
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    port_id:
+        description:
+            - physical interface port name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    host:
+        description:
+            - IP Address or hostname of APIC resolvable by Ansible control host
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    username:
+        description:
+            - Username used to login to the switch
+        required: true
+        default: 'admin'
+        choices: []
+        aliases: []
+    password:
+        description:
+            - Password used to login to the switch
+        required: true
+        default: 'C1sco12345'
+        choices: []
+        aliases: []
+    protocol:
+        description:
+            - Dictates connection protocol to use
+        required: false
+        default: https
+        choices: ['http', 'https']
+        aliases: []
+'''
+
+EXAMPLES = '''
+
+# disable physical interface
+- aci_disable_physical_interface: state={{state}} action=post pod_id={{ pod_id }} node_id={{ node_id }} port_name={{ port_name }} host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+
+'''
+
+import socket
+import json
+import requests
+
+def main():
+    ''' Ansible module to take all the parameter values from the playbook '''
+    module = AnsibleModule(
+        argument_spec=dict(
+            state=dict(type='str', required=True),
+            action=dict(choices=['post', 'get']),
+	        pod_id=dict(type='str', required=True),
+            node_id=dict(type='str', required=True),
+	        port_name=dict(type='str', required=True),
+            host=dict(required=True),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str', default='Cisco!123'),
+            protocol=dict(choices=['http', 'https'], default='http')
+        ),
+        supports_check_mode=False
+    )
+
+    state = module.params['username']
+    username = module.params['username']
+    password = module.params['password']
+    protocol = module.params['protocol']
+    host = socket.gethostbyname(module.params['host'])
+
+    action = module.params['action']
+    pod_id = module.params['pod_id']
+    node_id = module.params['node_id']
+    port_name = module.params['port_name']
+
+    post_uri = '/api/node/mo/uni/fabric/outofsvc.json'
+    get_uri = '/api/node/mo/topology/pod-'+pod_id+'/node-'+node_id+'/sys/phys-['+port_name+'].json'
+    ''' Config payload to disable the physical interface '''
+    config_data = {
+        "fabricRsOosPath": {
+            "attributes": {
+                "tDn":"topology/pod-"+pod_id+"/paths-"+node_id+"/pathep-["+port_name+"]",
+                "lc":"blacklist"       
+            },
+            "children": []
+        }
+    }
+    payload_data = json.dumps(config_data) 
+
+    ''' authentication || || Throw an error otherwise'''
+    apic = "{0}://{1}/".format(protocol, host)
+
+    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
+    url=apic+'api/aaaLogin.json'
+
+    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+
+    if authenticate.status_code != 200:
+        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
+
+    ''' Sending the request to APIC '''
+    if post_uri.startswith('/'):
+        post_uri = post_uri[1:]
+    post_url = apic + post_uri
+
+    if get_uri.startswith('/'):
+        get_uri = get_uri[1:]
+    get_url = apic + get_uri
+
+    if action == 'post':
+        req = requests.post(post_url, cookies=authenticate.cookies,
+                            data=payload_data, verify=False)
+    elif action == 'get':
+        req = requests.get(get_url, cookies=authenticate.cookies,
+                           data=payload_data, verify=False) 
+    
+    ''' Check response status and parse it for status || Throw an error otherwise '''
+    response = req.text
+    status = req.status_code
+
+    changed = False
+    if req.status_code == 200:
+        if action == 'post':
+            changed = True
+        else:
+            changed = False
+    else:
+        module.fail_json(msg='error issuing api request',
+                         response=response, status=status)
+
+    results = {}
+    results['status'] = status
+    results['response'] = response
+    results['changed'] = changed
+
+    module.exit_json(**results)
+
+from ansible.module_utils.basic import *
+try:
+    main()
+except:
+    pass
+
+    
+
+
+
+
