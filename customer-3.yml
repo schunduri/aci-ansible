@@ -254,7 +254,7 @@
         - aci_rest:
               action: post
               uri: /api/mo/uni.xml
-              config_file: /home/swetha/ansible/aci-ansible/configs/aep_AAEP.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/aep_Server-KVM.xml
               host: "{{ inventory_hostname }}"
               username: "{{ user }}"
               password: "{{ passwd }}"
@@ -263,7 +263,7 @@
         - aci_rest:
               action: post
               uri: /api/mo/uni.xml
-              config_file: /home/swetha/ansible/aci-ansible/configs/lappg_LAPPG.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/lappg_QA-KVM.xml
               host: "{{ inventory_hostname }}"
               username: "{{ user }}"
               password: "{{ passwd }}"
@@ -272,7 +272,7 @@
         - aci_rest:
               action: post
               uri: /api/mo/uni.xml
-              config_file: /home/swetha/ansible/aci-ansible/configs/lip_LIP.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/lip_LIP-KVM.xml
               host: "{{ inventory_hostname }}"
               username: "{{ user }}"
               password: "{{ passwd }}"

@@ -59,7 +59,10 @@ def attachable_entity_profile_config(attachable_entity_profile, aep_dom_profile)
     config_data2 = '\t<infraRsDomP tDn="uni/phys-'+aep_dom_profile+'"/>\n'
     config_data3 = '</infraAttEntityP>'
     attachable_entity_profile_config = open(glob_config_file_location+'/aep_'+attachable_entity_profile+'.xml', 'w')
-    attachable_entity_profile_config.write(config_data)
+    attachable_entity_profile_config.write(config_data1)
+    attachable_entity_profile_config.write(config_data2)
+    attachable_entity_profile_config.write(config_data3)
+    
 
 def leaf_access_port_policy_group_config(lappg, attachable_entity_profile):
     global glob_config_file_location
