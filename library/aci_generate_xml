@@ -1,0 +1,185 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+
+'''
+
+EXAMPLES = '''
+
+'''
+
+import socket
+import json
+import requests
+import sys
+
+global glob_config_file_location
+
+def tenant_config(tenant):
+    global glob_config_file_location
+    ''' Config payload '''
+    config_data = '<fvTenant dn="uni/tn-'+tenant+'" name="'+tenant+'"/>'
+    tenant_config = open(glob_config_file_location+'/tenant_'+tenant+'.xml', 'w')
+    tenant_config.write(config_data)
+	
+def application_profile_config(tenant, application_profile):
+    global glob_config_file_location
+    ''' Config payload and create a config file '''
+    config_data = '<fvAp dn="uni/tn-'+tenant+'/ap-'+application_profile+'" name="'+application_profile+'" prio="unspecified"/>'
+    app_profile_config = open(glob_config_file_location+'/application_profile_'+application_profile+'.xml', 'w')
+    app_profile_config.write(config_data)
+
+def epg_config(tenant, application_profile, epg_name):
+    global glob_config_file_location
+    ''' Config payload for epg '''
+    config_data = '<fvAEPg dn="uni/tn-'+tenant+'/ap-'+application_profile+'/epg-'+epg_name+'" name="'+epg_name+'" prio="unspecified"/>'
+    epg_config = open(glob_config_file_location+'/epg_'+epg_name+'.xml', 'w')	
+    epg_config.write(config_data)
+
+def vrf_config(tenant, vrf):
+    global glob_config_file_location
+    config_data = '<fvCtx dn="uni/tn-'+tenant+'/ctx-'+vrf+'" name="'+vrf+'"/>'
+    vrf_config = open(glob_config_file_location+'/vrf_'+vrf+'.xml', 'w')
+    vrf_config.write(config_data)
+
+def bd_config(tenant, vrf, bd, arp_flooding):
+    global glob_config_file_location
+    config_data1 = '<fvBD arpFlood="'+arp_flooding+'" dn="uni/tn-'+tenant+'/BD-'+bd+'" name="'+bd+'">' 
+    config_data2 = '\t<fvRsCtx tnFvCtxName="'+vrf+'"/>'
+    config_data3 = '</fvBD>'
+    bd_config = open(glob_config_file_location+'/bd_'+bd+'.xml', 'w')
+    bd_config.write(config_data1)
+    bd_config.write(config_data2)
+    bd_config.write(config_data3)
+
+def attachable_entity_profile_config(attachable_entity_profile, aep_dom_profile):
+    global glob_config_file_location
+    config_data1 = '<infraAttEntityP dn="uni/infra/attentp-'+attachable_entity_profile+'" name="'+attachable_entity_profile+'" >\n'
+    config_data2 = '\t<infraRsDomP tDn="uni/phys-'+aep_dom_profile+'"/>\n'
+    config_data3 = '</infraAttEntityP>'
+    attachable_entity_profile_config = open(glob_config_file_location+'/aep_'+attachable_entity_profile+'.xml', 'w')
+    attachable_entity_profile_config.write(config_data)
+
+def leaf_access_port_policy_group_config(lappg, attachable_entity_profile):
+    global glob_config_file_location
+    config_data1 = '<infraAccPortGrp dn="uni/infra/funcprof/accportgrp-'+lappg+'" name="'+lappg+'">\n'
+    config_data2 = '\t<infraRsAttEntP tDn="uni/infra/attentp-'+attachable_entity_profile+'"/>\n'
+    config_data3 = '</infraAccPortGrp>'
+    leaf_access_port_policy_group_config = open(glob_config_file_location+'/lappg_'+lappg+'.xml', 'w')
+    leaf_access_port_policy_group_config.write(config_data1)
+    leaf_access_port_policy_group_config.write(config_data2)
+    leaf_access_port_policy_group_config.write(config_data3)
+
+def leaf_interface_profile_config(leaf_interface_profile, interface_selector, lappg, port):
+    global glob_config_file_location
+    config_data1 = '<infraAccPortP dn="uni/infra/accportprof-'+leaf_interface_profile+'" name="'+leaf_interface_profile+'" >\n'
+    config_data2 = '\t<infraHPortS name="'+interface_selector+'" type="range">\n'
+    config_data3 = '\t\t<infraRsAccBaseGrp fexId="101" tDn="uni/infra/funcprof/accportgrp-'+lappg+'"/>\n'
+    config_data4 = '\t\t<infraPortBlk fromCard="1" fromPort="'+port+'" name="block2" toCard="1" toPort="'+port+'"/>\n'
+    config_data5 = '\t</infraHPortS>\n'
+    config_data6 = '</infraAccPortP>'
+    leaf_interface_profile_config = open(glob_config_file_location+'/lip_'+leaf_interface_profile+'.xml', 'w')
+    leaf_interface_profile_config.write(config_data1)
+    leaf_interface_profile_config.write(config_data2)
+    leaf_interface_profile_config.write(config_data3)
+    leaf_interface_profile_config.write(config_data4)
+    leaf_interface_profile_config.write(config_data5)
+    leaf_interface_profile_config.write(config_data6)
+def main():
+    global glob_config_file_location
+    ''' Ansible module to take all the parameter values from the playbook '''
+    module = AnsibleModule(
+        argument_spec=dict(
+                config_file_location=dict(type='str', required=True),
+	        tenant=dict(type='str', required=False),
+		application_profile=dict(type='str', required=False),
+  	 	epg=dict(type='str', required=False),
+		vrf=dict(type='str', required=False),
+		bd=dict(type='str', required=False),
+                arp_flooding=dict(type='str', required=False),
+                attachable_entity_profile=dict(type='str', required=False),
+                aep_dom_profile=dict(type='str', required=False),
+		leaf_access_port_policy_group=dict(type='str', required=False),
+		aep_leaf=dict(type='str', required=False),
+                leaf_interface_profile=dict(type='str', required=False),
+ 		interface_selector=dict(type='str', required=False),
+		lappg=dict(type='str', required=False),
+		port=dict(type='str', required=False),
+        ),
+        supports_check_mode=False
+    )
+    config_file_location = module.params['config_file_location']
+    tenant = module.params['tenant']
+    application_profile = module.params['application_profile']
+    epg=module.params['epg']
+    vrf=module.params['vrf']
+    bd=module.params['bd']
+    arp_flooding=module.params['arp_flooding']
+    attachable_entity_profile=module.params['attachable_entity_profile']
+    aep_dom_profile=module.params['aep_dom_profile']
+    leaf_access_port_policy_group=module.params['leaf_access_port_policy_group']
+    aep_leaf=module.params['aep_leaf']
+    leaf_interface_profile=module.params['leaf_interface_profile']
+    interface_selector=module.params['interface_selector']
+    lappg=module.params['lappg']
+    port=module.params['port']
+
+    glob_config_file_location = str(config_file_location)
+    tenant = str(tenant)
+    application_profile = str(application_profile)
+    epg = str(epg)
+    vrf = str(vrf)
+    bd = str(bd)
+    arp_flooding=str(arp_flooding)
+    attachable_entity_profile=str(attachable_entity_profile)
+    aep_dom_profile=str(aep_dom_profile)
+    leaf_access_port_policy_group=str(leaf_access_port_policy_group)
+    aep_leaf=str(aep_leaf)
+    leaf_interface_profile=str(leaf_interface_profile)
+    interface_selector=str(interface_selector)
+    lappg=str(lappg)
+    port=str(port)
+    
+    if glob_config_file_location != '':
+	
+    	if tenant != '':
+        	tenant_config(tenant)
+	
+    	if application_profile != '':
+		application_profile_config(tenant, application_profile)
+    
+    	if epg != '':
+		epg_config(tenant, application_profile, epg)
+
+    	if vrf != '':
+		vrf_config(tenant, vrf)
+
+    	if bd != '':
+        	if arp_flooding != '':
+	    		bd_config(tenant, vrf, bd, arp_flooding)
+        	else:
+            		arp_flooding = 'no'
+            		bd_config(tenant, vrf, bd, arp_flloding)
+    	if attachable_entity_profile != '':
+		attachable_entity_profile_config(attachable_entity_profile, aep_dom_profile)
+    
+    	if leaf_access_port_policy_group != '':
+		leaf_access_port_policy_group_config(leaf_access_port_policy_group, aep_leaf)
+
+    	if leaf_interface_profile != '':
+        	leaf_interface_profile_config(leaf_interface_profile, interface_selector, lappg, port)
+   
+    	else:
+        	chaged = False	 	
+    
+
+    	changed = True
+    	results = {}
+    	results['status'] = changed
+    	module.exit_json(**results)
+    
+
+from ansible.module_utils.basic import *
+if __name__ == '__main__':
+    main()

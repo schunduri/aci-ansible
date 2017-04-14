@@ -209,7 +209,8 @@ def get_vmm_domains(moDir, tenant, anp, name):
     dnq.queryTarget = 'children'
     dnq.classFilter = 'fvRsDomAtt'
     vmms = moDir.query(dnq)
-    names = [str(each.tDn).split('dom-')[-1] for each in vmms if each]
+    names = [str(each.dn).split('rsdomAttr-')[-1] for each in vmms if each]
+    #names = [each.tDn for each in vmms if each]
     return names
 
 
@@ -293,10 +294,10 @@ def build_object(object_type, resource_mo, each):
         RsProv(resource_mo, tnVzBrCPName=each)
     elif object_type == 'bridge_domain':
         RsBd(resource_mo, tnFvBDName=each)
-    elif object_type == 'vmm_domain':
-        RsDomAtt(
-            resource_mo, tDn='uni/vmmp-VMware/dom-{0}'.format(
-                each))
+   # elif object_type == 'vmm_domain':
+    #    RsDomAtt(
+     #       resource_mo, tDn='uni/vmmp-VMware/dom-{0}'.format(
+      #          each))
 
 
 def remove_object(object_type, resource_mo, each):
@@ -306,11 +307,11 @@ def remove_object(object_type, resource_mo, each):
         obj = RsProv(resource_mo, tnVzBrCPName=each)
     elif object_type == 'bridge_domain':
         obj = RsBd(resource_mo, tnFvBDName=each)
-    elif object_type == 'vmm_domain':
-        obj = RsDomAtt(
-               resource_mo, tDn='uni/vmmp-VMware/dom-{0}'.format(
-                each))
-    obj.delete()
+    #elif object_type == 'vmm_domain':
+     #   obj = RsDomAtt(
+      #         resource_mo, tDn='uni/vmmp-VMware/dom-{0}'.format(
+       #         each))
+#    obj.delete()
 
 
 def main():
@@ -451,4 +452,7 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+        main()
+
+

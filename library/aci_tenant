@@ -130,8 +130,8 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='C1sco12345'),
-            protocol=dict(choices=['http', 'https'], default='https')
+            password=dict(type='str', default='Cisco!123'),
+            protocol=dict(choices=['http', 'https'], default='http')
         ),
         supports_check_mode=True
     )
@@ -206,4 +206,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+        main()

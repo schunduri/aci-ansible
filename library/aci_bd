@@ -132,6 +132,11 @@ except ImportError as ie:
 BD_KEY_MAP = {
     'descr': 'descr',
     'name': 'name',
+    'arpFlood': 'arpFlood',
+    'l2_unicast': 'unkMacUcastAct',
+    'l3_multicast': 'unkMcastAct',
+    'multi_dest': 'multiDstPktAct',
+    'unicast_routing': 'unicastRoute'
 }
 SUBNET_KEY_MAP = {
     'subnet': 'ip'
@@ -189,6 +194,11 @@ def main():
             subnet=dict(type='str'),
             descr=dict(type='str'),
             state=dict(choices=['present', 'absent'], default='present'),
+            arpFlood=dict(choices=['yes','no'], default='no'),
+	    l2_unicast=dict(choices=['flood','proxy']),
+            l3_multicast=dict(choices=['flood','opt-flood'], required = False),
+            multi_dest=dict(choices=['bd-flood','drop','encap-flood']),
+            unicast_routing=dict(choices=['yes','no'], default='no'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -204,7 +214,6 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
-
     state = module.params['state'].lower()
 
     name = module.params['name']
@@ -212,6 +221,11 @@ def main():
     descr = module.params['descr']
     context = module.params['context']
     subnet = module.params['subnet']
+    arpFlood = module.params['arpFlood']
+    l2_unicast = module.params['l2_unicast']
+    l3_multicast = module.params['l3_multicast']
+    multi_dest = module.params['multi_dest']
+    unicast_routing = module.params['unicast_routing']
 
     apic = '{0}://{1}/'.format(protocol, host)
 
@@ -229,7 +243,7 @@ def main():
 
     existing = get_existing(moDir, tenant, name, subnet)
 
-    args = dict(name=name, descr=descr, subnet=subnet, context=context)
+    args = dict(name=name, descr=descr, subnet=subnet, context=context, arpFlood=arpFlood, l2_unicast=l2_unicast, l3_multicast=l3_multicast, multi_dest=multi_dest, unicast_routing=unicast_routing)
 
     proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 
@@ -284,4 +298,6 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+        main()
+

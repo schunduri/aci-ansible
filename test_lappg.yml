@@ -1,0 +1,55 @@
+---
+
+- name: playbook for aci testing
+  hosts: apic
+  connection: local
+  gather_facts: no
+
+  vars:
+      inventory_hostname: 172.31.186.184
+      user: admin
+      passwd: Cisco!123
+      tenant:
+          - { name: 'QA-Customer1-Tenant' }
+      application_profile:
+          - { name: 'QA-Customer1-AppProfile' }
+      epg:
+          - { name: 'QA-Customer1-EPG' }
+          - { name: 'QA-Customer2-EPG' }
+      vrf:
+          - { name: 'QA-Customer1-VRF' }
+      bd:
+          - { name: 'QA-Customer1-BD', arp_flooding: 'yes' }
+      attachable_entity_profile:
+          - { name: 'QA-Customer1-AEP' }
+      leaf_access_port_policy_group:
+          - { name: 'QA-Customer1-LAPPG' }
+
+  tasks:
+    - name: generate_tenant_config_file
+      aci_generate_xml:
+          tenant: "{{ item[0].name }}"
+          application_profile: "{{ item[1].name }}"
+          epg: "{{ item[2].name }}"
+          vrf: "{{ item[3].name }}"
+          bd: "{{ item[4].name }}"
+          arp_flooding: "{{ item[4].arp_flooding }}"
+          attachable_entity_profile: "{{ item[5].name }}"
+          leaf_access_port_policy_group: "{{ item[6].name }}"
+      with_nested:
+          - "{{ tenant }}"
+          - "{{ application_profile }}"
+          - "{{ epg }}"
+          - "{{ vrf }}"
+          - "{{ bd }}"
+          - "{{ attachable_entity_profile }}"
+          - "{{ leaf_access_port_policy_group }}"
+
+    - name: add a lappg
+      aci_rest:
+        action: post
+        uri: /api/mo/uni.xml
+        config_file: /home/swetha/ansible/aci-ansible/configs/lappg_QA-Customer1-LAPPG.xml
+        host: "{{ inventory_hostname }}"
+        username: "{{ user }}"
+        password: "{{ passwd }}"

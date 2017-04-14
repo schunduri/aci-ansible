@@ -1,0 +1,19 @@
+#!/usr/bin/python
+
+DOCUMENTATION = '''
+---
+
+'''
+
+EXAMPLES = '''
+
+'''
+
+def main():
+     module = AnsibleModule(
+        argument_spec=dict(
+            state=dict(type='str', required=True),
+            action=dict(choices=['post', 'get']),
+            pod_id=dict(type='str', required=True),
+            node_id=dict(type='str', required=True),
+            port_name=dict(type='str', required=True),

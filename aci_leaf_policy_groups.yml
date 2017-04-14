@@ -1,0 +1,16 @@
+---
+
+ - name: playbook for testing leaf policy groups
+   hosts: apic
+   connection: local
+   gather_facts: no
+
+   vars:
+      inventory_hostname: 172.31.186.184
+      user: admin
+      pass: Cisco!123
+
+
+   tasks:
+      - name: add a leaf policy group
+        aci_leaf_policy_group: action=post uri=/api/mo/uni.xml config_file=/home/swetha/ansible/aci-ansible/configs/leaf_policy_group.xml host={{ inventory_hostname }} username={{ user }} password={{ pass }}

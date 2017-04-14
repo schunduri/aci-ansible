@@ -48,16 +48,16 @@ options:
             - name of the absolute path of the filname that includes the body
               of the http request being sent to the ACI fabric
         required: false
-        default: null
-        choices: []
-        aliases: []
+	default: null
+	choices: []
+	aliases: []
     host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
+	description:
+	    - IP address or hostname for APIC
+	required: true
+	default: null
+	choices: []
+	aliases: []
     username:
         description:
             - Username used to login to the switch
@@ -83,23 +83,17 @@ options:
 
 EXAMPLES = '''
 
-# add a tenant
-- aci_rest: action=post uri=/api/mo/uni.xml config_file=/home/cisco/ansible/aci/configs/aci_config.xml host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# get tenants
-- aci_rest: action=get uri=/api/node/class/fvTenant.json host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# configure contracts
-- aci_rest: action=post uri=/api/mo/uni.xml config_file=/home/cisco/ansible/aci/configs/contract_config.xml host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+# add a leaf policy group
+- aci_leaf_policy_group: action=post uri=/api/mo/uni.xml config_file=/home/swetha/ansible/aci-ansible/configs/leaf_policy_group.xml host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
 '''
+
+
 import socket
 import json
 import requests
 
-
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(type='str', required=True),
@@ -181,7 +175,7 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-if __name__ == '__main__':
+
+if __name__ ==  '__main__':
     main()
-
-
+ 

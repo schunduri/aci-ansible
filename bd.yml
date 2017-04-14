@@ -1,0 +1,11 @@
+---
+
+ - name: playbook for aci testing
+   hosts: apic
+   connection: local
+   gather_facts: no
+
+   tasks:
+
+      - name: create bd   
+        aci_bd: action=post  tenant_name={{ tenant_name }}  bd_name={{ bd_name }} description={{ description }} arp_flooding={{ arp }}  host={{ inventory_hostname }} username={{ user }} password={{ pass }}

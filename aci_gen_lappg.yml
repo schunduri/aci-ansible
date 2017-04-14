@@ -1,0 +1,29 @@
+---
+
+- name: playbook for aci testing
+  hosts: apic
+  connection: local
+  gather_facts: no
+
+  vars:
+      inventory_hostname: 172.31.186.184
+      user: admin
+      passwd: Cisco!123
+      attachable_entity_profile:
+          - { name: 'QA-Customer1-AEP' }
+
+  tasks:
+    - name: generate_tenant_config_file
+      aci_gen_xml: 
+          attachable_entity_profile: "{{ item[0].name }}"
+      with_nested:
+          - "{{ attachable_entity_profile }}"
+
+    - name: add aep
+      aci_rest:
+        action: post
+        uri: /api/mo/uni.xml
+        config_file: /home/swetha/ansible/aci-ansible/configs/aep_QA-Customer1-AEP.xml
+        host: "{{ inventory_hostname }}"
+        username: "{{ user }}"
+        password: "{{ passwd }}"

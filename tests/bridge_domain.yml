@@ -6,7 +6,6 @@
   gather_facts: no
 
   tasks:
-
     # prep for bridge domains
     - name: ensure tenant exists
       aci_tenant: name=ACILab22 descr='tenant by Ansible' state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}

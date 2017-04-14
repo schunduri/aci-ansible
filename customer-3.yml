@@ -1,0 +1,278 @@
+---
+-   name: Deploy 
+    hosts: apic
+    connection: local
+    gather_facts: no
+
+    vars:
+      #inventory_hostname: 172.31.186.184
+      user: admin
+      passwd: Cisco!123
+      #tenant: QA-Tenant-1
+      #application_profile: PCI
+      #epg_name: PCI-APP
+      #path: topology/pod-1/paths-101/pathep-[eth1/26]
+      tenant: 
+        - { name: "QA-Tenant-2121" } 
+      application_profile: 
+        - { name: 'PCI' }
+        - { name: 'NON-PCI' }
+      epg_name:
+        - { name: 'PCI-WWW', bd: 'BD-902', state: present }
+        - { name: 'PCI-APP', bd: 'BD-903', state: present }
+        - { name: 'PCI-DB', bd: 'BD-904', state: present }
+        - { name: 'NON-PCI-910', bd: 'BD-910', state: present }
+        - { name: 'NON-PCI-911', bd: 'BD-910', state: present }
+      path:
+        - { name: "topology/pod-1/paths-101/pathep-[eth1/24]" }
+      bd:
+         - { name: 'BD-902', state: present , subnet: }
+         - { name: 'BD-903', state: present , subnet: }
+         - { name: 'BD-903', state: present , subnet: }
+         - { name: 'BD-904', state: present , subnet: }
+         - { name: 'BD-905', state: present , subnet: }
+         - { name: 'BD-910', state: present , subnet: 192.168.10.1/24 }
+         - { name: 'BD-911', state: present , subnet: 192.168.11.1/24 }
+      domain:
+        - { domain_type: "phys", domain_profile: "Phy-QA" }
+      attachable_entity_profile: 
+        - { name: 'Server-KVM', aep_dom_profile: 'Phy-QA' }
+      leaf_access_port_policy_group:
+        - { name: 'QA-KVM', aep_leaf: 'Server-KVM' }
+      leaf_interface_profile:
+        - { name: 'LIP-KVM', interface_selector: 'LIP-IS', lappg: 'QA-KVM', port: '24' }
+
+
+
+    tasks:
+
+        - name: create tenant
+          aci_tenant:
+              name: "{{ item.name }}"
+              descr: 'tenant by Ansbile'
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_items: "{{ tenant }}"
+              
+        # - name: Configuring Vlan on all Switches
+        #   nxos_vlan: vlan_id=11 name=example-1-2 state=present provider="{{ creds }}"
+
+        # - name: create tenant
+        #   aci_tenant: name=walmart descr='tenant by Ansible' state=present host={{ inventory_hostname }} username=admin password=rovikumar
+
+        # - name: create ANP
+        - name: create VRF for L3 BD
+          aci_context:
+              name: VRF-QA-1
+              tenant: common
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+
+        - name: create VRF for L3 BD
+          aci_context:
+              name: VRF-Non-PCI
+              tenant: "{{ item.name }}"
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_items: "{{ tenant }}"
+
+
+        - name: create VRF for PCI (L2 BD)
+          aci_context:
+              name: VRF-PCI
+              tenant: "{{ item.name }}"
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_items: "{{ tenant }}"
+
+        - name: create BD for PCI
+          aci_bridge_domain:
+              name: "{{ item[0].name }}"
+              context: VRF-PCI
+              tenant: "{{ item[1].name }}"
+              state: "{{ item[0].state }}"
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_nested:
+             - "{{ bd }}"
+             - "{{ tenant}}"
+          when: 'item[0].subnet is none ' 
+
+
+        - name: create BD for non-PCI
+          aci_bridge_domain:
+              name: "{{ item[1].name }}"
+              context: VRF-Non-PCI
+              tenant: "{{ item[0].name }}"
+              subnet: "{{ item[1].subnet }}"
+              state: "{{ item[1].state }}"
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_nested:
+             - "{{ tenant }}"
+             - "{{ bd }}"
+          when: 'item[1].subnet is not none '
+
+        #   aci_anp: name=Legacy tenant=walmart state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+        - name: create ANP for PCI and NON-PCI traffic
+          aci_anp:
+              name: "{{ item[0].name }}"
+              tenant: "{{ item[1].name }}"
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_nested:
+             - "{{ application_profile }}"
+             - "{{ tenant }}"
+
+
+    ## creating EPGs for PCI traffic; for L2 , there is no contracts; communication happens via FW
+        - aci_epg:
+            name: "{{ item[1].name }}"
+            bridge_domain: "{{ item[1].bd }}"
+            anp: PCI
+            tenant: "{{ item[0].name }}"
+            state: "{{ item[1].state }}"
+            host: "{{ inventory_hostname }}"
+            username: "{{ user }}"
+            password: "{{ passwd }}"
+          with_nested:
+            - "{{ tenant }}"
+            - "{{ epg_name }}"
+          when: '"NON" not in item[1].name'
+
+        #   aci_anp: name=Legacy tenant=walmart state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+        - name: create ANP2 for non PCI traffic
+          aci_anp:
+              name: NON-PCI
+              tenant: "{{ item.name }}"
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_items:
+            - "{{ tenant }}"
+
+    #          - aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+        - name: create Contract (any any)
+          aci_contract:
+              name: ANY
+              tenant: "{{ item.name }}"
+              state: present
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+          with_items:
+            - "{{ tenant }}"
+
+    ## creating EPGs for PCI traffic; for L2 , there is no contracts; communication happens via FW
+        - aci_epg:
+            name: "{{ item[1].name }}"
+            bridge_domain: "{{ item[1].bd }}"
+            consumed_contracts: ANY
+            provided_contracts: ANY
+            anp: NON-PCI
+            tenant: "{{ item[0].name }}"
+            state: "{{ item[1].state }}"
+            host: "{{ inventory_hostname }}"
+            username: "{{ user }}"
+            password: "{{ passwd }}"
+          with_nested:
+             - "{{ tenant }}"
+             - "{{ epg_name }}"
+         # when: '"NON" in item[1].name'
+
+## create  domain EPG binding
+        - aci_epg_domain_binding:
+            action: "post"
+            tenant_name: "{{ item[0].name }}"
+            application_profile: "{{ item[1].name }}"
+            epg_name: "{{ item[2].name }}"
+            domain: "{{ item[3].domain_type }}"
+            domain_profile: "{{ item[3].domain_profile }}"
+            encap: "902"
+            immediacy: "immediate"
+            host: "{{ inventory_hostname }}"
+            username: "{{ user }}"
+            password: "{{ pass }}"
+          with_nested:
+            - "{{ tenant }}"
+            - "{{ application_profile }}"
+            - "{{ epg_name }}"
+            - "{{ domain }}"
+          when: '"NON" not in item[1].name and "NON" not in item[2].name'
+
+    ## create  static EPG binding
+        - aci_epg_static_binding: 
+            action: "post"
+            tenant_name: "{{ item[0].name }}"
+            application_profile: "{{ item[1].name }}" 
+            epg_name: "{{ item[2].name }}" 
+            description: "static binding created by ansible" 
+            path: "{{ item[3].name }}" 
+            encap: "902" 
+            mode: "regular" 
+            immediacy: "immediate"
+            host: "{{ inventory_hostname }}" 
+            username: "{{ user }}" 
+            password: "{{ pass }}" 
+          with_nested: 
+            - "{{ tenant }}"
+            - "{{ application_profile }}"
+            - "{{ epg_name }}"
+            - "{{ path }}"
+          when: '"NON" not in item[1].name and "NON" not in item[2].name'
+
+    ## generate config files 
+        - aci_generate_xml:
+              config_file_location: "/home/swetha/ansible/aci-ansible/configs" 
+              attachable_entity_profile: "{{ item[0].name }}"
+              aep_dom_profile: "{{ item[0].aep_dom_profile }}"
+              leaf_access_port_policy_group: "{{ item[1].name }}"
+              aep_leaf: "{{ item[1].aep_leaf }}"
+              leaf_interface_profile: "{{ item[2].name }}"
+              interface_selector: "{{ item[2].interface_selector }}"
+              lappg: "{{ item[2].lappg }}"
+              port: "{{ item[2].port }}"
+          with_nested:
+              - "{{ attachable_entity_profile }}"
+              - "{{ leaf_access_port_policy_group }}"
+              - "{{ leaf_interface_profile }}"
+
+    ## rest message to create attachable entity profile
+        - aci_rest:
+              action: post
+              uri: /api/mo/uni.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/aep_AAEP.xml
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+
+    ## rest message to create leaf access port policy group
+        - aci_rest:
+              action: post
+              uri: /api/mo/uni.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/lappg_LAPPG.xml
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"
+
+    ## rest message to create attachable entity profile
+        - aci_rest:
+              action: post
+              uri: /api/mo/uni.xml
+              config_file: /home/swetha/ansible/aci-ansible/configs/lip_LIP.xml
+              host: "{{ inventory_hostname }}"
+              username: "{{ user }}"
+              password: "{{ passwd }}"

@@ -124,14 +124,18 @@ try:
     from cobra.model.fv import BD
     from cobra.model.fv import Subnet
     from cobra.model.fv import RsCtx
-    from cobra.internal.codec.xmlcodec import toXMLStr
-except ImportError as ie:
+    from cobra.internal.codec.xmlcodec import toXMLStrexcept ImportError as ie:
     HAS_COBRA = False
 
 
 BD_KEY_MAP = {
     'descr': 'descr',
     'name': 'name',
+    'arpFlood': 'arpFlood',
+    'l2_unicast':'unkMacUcastAct'
+    'l3_multicast':'unkMcastAct'
+
+
 }
 SUBNET_KEY_MAP = {
     'subnet': 'ip'
@@ -189,6 +193,8 @@ def main():
             subnet=dict(type='str'),
             descr=dict(type='str'),
             state=dict(choices=['present', 'absent'], default='present'),
+            arpFlood=dict(choices=['yes','no'], default='no'),
+	    l2_unicast=dict(choices=['flood','proxy']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str', default='C1sco12345'),
@@ -212,6 +218,8 @@ def main():
     descr = module.params['descr']
     context = module.params['context']
     subnet = module.params['subnet']
+    arpFlood = module.params['arpFlood']
+    l2_unicast = module.params['l2_unicast']
 
     apic = '{0}://{1}/'.format(protocol, host)
 
@@ -229,7 +237,7 @@ def main():
 
     existing = get_existing(moDir, tenant, name, subnet)
 
-    args = dict(name=name, descr=descr, subnet=subnet, context=context)
+    args = dict(name=name, descr=descr, subnet=subnet, context=context, arpFlood=arpFlood, l2_unicast=l2_unicast)
 
     proposed = dict((k, v) for k, v in args.iteritems() if v is not None)
 

@@ -28,12 +28,4 @@
       # not in the common tenant, configure them manually first
 
     - name: ensure subject exists
-      aci_contract_subject:
-         name: web-subject
-         contract: web-contract
-         filters: "{{ filter1 }}"
-         tenant: customer_1
-         state: present
-         host: "{{ inventory_hostname }}"
-         apply_both_directions: true
-         descr: 'subj description'
+      aci_contract_subject: name=web-subject contract=web-contract filters={{ filter1 }} tenant=customer_1 state=present host={{ inventory_hostname }} apply_both_directions=true descr='subj description' host={{ inventory_hostname }} username={{ user }} password={{ pass }} 
