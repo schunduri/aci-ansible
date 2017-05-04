@@ -88,7 +88,7 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
     protocol:
@@ -102,8 +102,18 @@ options:
 
 EXAMPLES = '''
 
-# bind EPG to a domain
-- aci_epg_domain_binding: action={{ action }} tenant_name={{ tenant_name }} application_profile={{ application_profile }} epg_name={{ epg_name }} encap={{ encap }} domain={{ domain }} domain_profile={{ domain_profile }} immediacy={{ immediacy }} host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+    aci_epg_domain_binding: 
+        action: "{{ action }}"
+	tenant_name: "{{ tenant_name }}"
+	application_profile: "{{ application_profile }}"
+	epg_name: "{{ epg_name }}"
+	encap: "{{ encap }}"
+	domain: "{{ domain }}"
+	domain_profile: "{{ domain_profile }}"
+	immediacy: "{{ immediacy }}" 
+	host: "{{ inventory_hostname }}"
+	username: "{{ user }}"
+	password: "{{ pass }}"
 
 '''
 
@@ -125,7 +135,7 @@ def main():
             immediacy=dict(choices=['immediate','ondemand'], default='immediate'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
+            password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='http')
         ),
         supports_check_mode=False
