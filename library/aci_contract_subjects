@@ -1,8 +1,8 @@
 #!/usr/bin/python
 DOCUMENTATION = '''
 
-
-imporhort_description: Manages initial contract subjects(does not include contracts)
+module: aci_contract_subjects
+short_description: Manages initial contract subjects(does not include contracts)
 description:
     -  Manage contract subjects with this module
 author: Cisco
@@ -48,49 +48,49 @@ options:
         default: unspecified
         choices: []
         aliases: []
- filter_name:
+  filter_name:
         description:
             - Filter Name
         required:false
         default: null
         choices: []
         aliases: []
-directive:
+  directive:
         description:
             - Directive for filter  (can be none or log)
         required:false
         default: none
         choices: []
         aliases: []
-    descr:
+   descr:
         description:
             - Description for the AEP
         required: false
         default: null
         choices: []
         aliases: []
-    host:
+   host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
         aliases: []
-    username:
+   username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
         choices: []
         aliases: []
-    password:
+   password:
         description:
             - Password used to login to the switch
         required: true
         default: null
         choices: []
         aliases:[]                                                                  
-    protocol:
+   protocol:
         description:
             - Dictates connection protocol to use
         required: false
