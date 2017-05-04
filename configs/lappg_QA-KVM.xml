@@ -1,3 +1,0 @@
-<infraAccPortGrp dn="uni/infra/funcprof/accportgrp-QA-KVM" name="QA-KVM">
-	<infraRsAttEntP tDn="uni/infra/attentp-Server-KVM"/>
-</infraAccPortGrp>

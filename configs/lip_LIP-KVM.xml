@@ -1,6 +1,0 @@
-<infraAccPortP dn="uni/infra/accportprof-LIP-KVM" name="LIP-KVM" >
-	<infraHPortS name="LIP-IS" type="range">
-		<infraRsAccBaseGrp fexId="101" tDn="uni/infra/funcprof/accportgrp-QA-KVM"/>
-		<infraPortBlk fromCard="1" fromPort="24" name="block2" toCard="1" toPort="24"/>
-	</infraHPortS>
-</infraAccPortP>
