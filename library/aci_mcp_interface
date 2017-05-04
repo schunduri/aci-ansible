@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_tenant_bd
+module: aci_mcp_interface
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,29 +11,28 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
-    - Tenant should already exist
 options:
 	action:
 		description:
 			- post or get
-    tenant_name:
+    mcp_interface:
         description:
-            - Tenant Name
+            - MCP Interface name
         required: true
         default: null
         choices: []
         aliases: []
-    bd_name:
+    admin_state:
         description:
-            - Bridge Domain
-        required: true
-        default: null
-        choices: []
+            - Enable or Disable Admin State
+        required: false
+        default: 'enable'
+        choices: ['enable','disable']
         aliases: []
-    arp_flooding:
+    descr:
         description:
-            - Enable or Disable ARP_Flooding
-        required: true
+            - Description for MCP Interface
+        required: false
         default: null
         choices: []
         aliases: []
@@ -55,7 +54,7 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
     protocol:
@@ -69,8 +68,14 @@ options:
 
 EXAMPLES =  '''
 
-# aci tenant bd
-- aci_tenant_bd: action={{ action }} tenant_name={{ tenant_name }} bd_name={{ bd_name }} arp_flooding={{ arp_flooding }} host={{ inventory_hostname }} username={{ username }} password={{ password }}
+    aci_mcp_interface:
+        action: "{{ action }}" 
+        mcp_interface: "{{ mcp_interface }}"
+        admin_state: "{{ admin_state }}"
+        descr: "{{ descr }}
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
 
 '''
 
@@ -80,50 +85,46 @@ import requests
 
 
 def main():
+    
     ''' Ansible module to take all the parameter values from the playbook '''
 
-    module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post'], required=False),
-        tenant_name=dict(type='str', required=True),
-        bd_name=dict(type='str', required=True),
-        arp_flooding=dict(choices=['yes','no'], default="yes"),
-        l2_unknown_unicast=dict(choices=['proxy','flood'], default='proxy'),
-        l3_unknown_multicast=dict(choices=['flood','opt-flood']),
-        multi_dest=dict(choices=['bd-flood','drop','encap-flood'], default='bd-flood'),
-       
-        host=dict(required=True),
-        username=dict(type='str', default='admin'),
-        password=dict(type='str', default='Cisco!123'),
-        protocol=dict(choices=['http', 'https'], default='https'),
-        ), supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=dict(
+            action=dict(choices=['get', 'post'], required=False),
+            mcp_interface=dict(type='str'),
+            admin_state=dict(choices=['enabled','disabled'], default='enable'),
+            descr=dict(type='str',required=False),       
+            host=dict(required=True),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+        ), 
+        supports_check_mode=False
+    )
 
-    tenant_name = module.params['tenant_name']
     host = socket.gethostbyname(module.params['host'])
-    bd_name = module.params['bd_name']
-    arp_flooding = module.params['arp_flooding']
-    l2_unknown_unicast = module.params['l2_unknown_unicast']
-    l3_unknown_multicast = module.params['l3_unknown_multicast']
-    multi_dest = module.params['multi_dest']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
+    
+    mcp_interface = module.params['mcp_interface']
+    admin_state = module.params['admin_state']
+    descr = module.params['descr']
+    descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name \
-        + '.json'
-    get_uri = '/api/node/class/fvBD.json'
+    post_uri = '/api/mo/uni/infra/mcpIfP-'  + mcp_interface + '.json'
+    get_uri = '/api/node/class/mcpIfPol.json'
 
     config_data = {
-         "fvBD": {
-             "attributes": {
-                 "descr": "test",
-                  "arpFlood": arp_flooding,
-                  "unkMacUcastAct":l2_unknown_unicast,
-                  "unkMcastAct": l3_unknown_multicast,
-                  "multiDstPktAct": multi_dest
-             }
-         }
-     }
+      "mcpIfPol": {
+  	"attributes":{ 
+	     "adminSt": admin_state,
+	     "descr": descr,
+	     "name": mcp_interface
+		}
+          }
+     } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -176,9 +177,7 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-#try:
- #   main()
-#except:
- #   pass
-if __name__ == '__main__':
-	main()
+try:
+    main()
+except:
+    pass

@@ -1,78 +1,60 @@
 #!/usr/bin/python
-
-# Copyright 2015 Jason Edelman <jason@networktocode.com>
-# Network to Code, LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 DOCUMENTATION = '''
----
 
 module: aci_contract
 short_description: Manages initial contracts (does not include contract subjs)
 description:
-    - Manages contract resource, but does not include subjects although
-      subjects can be removed using this module
-author: Jason Edelman (@jedelman8)
+    -  Manages contract resource, but does not include subjects although
+        subjects can be removed using this module
+author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
-    - Cobra SDK
-notes:
-    - Tenant and context must be exist prior to using this module
-    - state=absent removes complete contract including the contract subjects
-      that were deployed with the aci_contract_subject module
+notes: Tenant must be exist prior to using this module
 options:
-    name:
+        action:
+                description:
+                        - post or get
+    tenant_name:
         description:
-            - Name of the contract
+            - Tenant Name
         required: true
         default: null
+        choices: []
+        aliases: []
+   contract_name:
+        description:
+            -Contract Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+   scope:
+        description:
+            -The scope of a service contract
+        required: true
+        default: 'context'
+        choices: ['context','application-profile','tenant','global']
+        aliases: []
+   priority:
+        description:
+            - Qos class 
+        required: false
+        default: unspecified
+        choices: [ 'unspecified','level1','level2','level3']
+        aliases: []
+  target:
+        description:
+            - Target DSCP
+        required:false
+        default: unspecified
         choices: []
         aliases: []
     descr:
         description:
-            - description of contract
+            - Description for the AEP
         required: false
         default: null
         choices: []
-        aliases: []
-    tenant:
-        description:
-            - name of tenant this contract will be part of
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    scope:
-        description:
-            - scope of contract
-        required: false
-        default: null
-        choices: ['application-profile', 'context', 'global', 'tenant']
-        aliases: []
-    prio:
-        description:
-            - priority (qosclass) of contract
-        required: false
-        default: null
-        choices: ['unspecified', 'level1', 'level2', 'level3']
-        aliases: []
-    state:
-        description:
-            - Desired state of the contract
-        required: false
-        default: present
-        choices: ['present','absent']
         aliases: []
     host:
         description:
@@ -92,152 +74,121 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
-        aliases: []
+        aliases:[]                                                                  
     protocol:
         description:
             - Dictates connection protocol to use
         required: false
         default: https
-        choices: ['http', 'https']
+        choices: [‘http', 'https']
         aliases: []
 '''
 
 EXAMPLES = '''
-# ensure contract exists
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
-# ensure contract exists with added params
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 prio=level2 scope=context host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure contract does not exist
-- aci_contract: name=web-contract tenant=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+    aci_contract:
+       action: "{{ action }}"
+       contract_name: "{{ app_profile_name }}"
+       tenant_name: "{{ tenant_name }}"
+       priority: "{{ priority }}"
+       scope: "{{ scope }}"
+       target: "{{ target }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
 
 '''
 import socket
-
-try:
-    HAS_COBRA = True
-    from cobra.mit.access import MoDirectory
-    from cobra.mit.session import LoginSession
-    from cobra.mit.request import ConfigRequest
-    from cobra.model.vz import BrCP
-    from cobra.internal.codec.xmlcodec import toXMLStr
-except ImportError as ie:
-    HAS_COBRA = False
-
-
-KEY_MAP = {
-    'descr': 'descr',
-    'scope': 'scope',
-    'prio': 'prio'
-}
-
-
-def get_attributes(keymap, mo):
-    resource = {}
-    if mo:
-        for mine, cobra in keymap.iteritems():
-            value = getattr(mo, cobra)
-            if value:
-                resource[mine] = value
-    return resource
-
-
-def get_existing(moDir, tenant, name):
-    mo = moDir.lookupByDn('uni/tn-{0}/brc-{1}'.format(tenant, name))
-    return get_attributes(KEY_MAP, mo)
-
+import json
+import requests
 
 def main():
 
+    ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            tenant=dict(type='str', required=True),
-            scope=dict(choices=['application-profile', 'context',
-                                'global', 'tenant']),
-            prio=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
-            descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], default='present'),
+            action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='C1sco12345'),
-            protocol=dict(choices=['http', 'https'], default='https')
+            password=dict(type='str', default='Cisco!123'),
+            protocol=dict(choices=['http', 'https'], default='http'),
+            contract_name=dict(type="str", required=False),
+            tenant_name=dict(type="str", required=False),
+            priority=dict(choices=['unspecified','level1','level2','level3'],default='unspecified'),
+            scope=dict(choices=['context','application-profile','tenant','global'],default='context'),
+            target=dict(type="str", required=False, default='unspecified'),
+            descr=dict(type="str", required=False),
         ),
-        supports_check_mode=True
+        supports_check_mode=False
     )
-    if not HAS_COBRA:
-        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
-                         error=str(ie))
 
+    contract_name=module.params['contract_name']
+    tenant_name=module.params['tenant_name']
+    priority=module.params['priority']
+    scope=module.params['scope']
+    target=module.params['target']
+    descr=module.params['descr']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
+    action = module.params['action']
+    post_uri ='api/mo/uni/tn-'+tenant_name+'/brc-'+contract_name+'.json'
+    get_uri = 'api/node/class/vzBrCP.json'
 
-    state = module.params['state'].lower()
+    ''' Config payload to enable the physical interface '''
+    config_data = {"vzBrCP":{"attributes":{"name":contract_name, "prio":priority,"scope":scope,"targetDscp":target, "descr":descr}}}
+    payload_data = json.dumps(config_data)
 
-    name = module.params['name']
-    tenant = module.params['tenant']
-    descr = module.params['descr']
-    scope = module.params['scope']
-    prio = module.params['prio']
-
+    ''' authentication || || Throw an error otherwise'''
     apic = '{0}://{1}/'.format(protocol, host)
+    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
+    url=apic+'api/aaaLogin.json'
+    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
 
-    session = LoginSession(apic, username, password)
-    moDir = MoDirectory(session)
-    moDir.login()
+    if authenticate.status_code != 200:
+        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
 
-    tenant_mo = moDir.lookupByDn('uni/tn-{0}'.format(tenant))
-    if not tenant_mo:
-        print module.fail_json(msg='tenant needs to be created first')
+    ''' Sending the request to APIC '''
+    if post_uri.startswith('/'):
+        post_uri = post_uri[1:]
+    post_url = apic + post_uri
 
-    existing = get_existing(moDir, tenant, name)
+    if get_uri.startswith('/'):
+        get_uri = get_uri[1:]
+    get_url = apic + get_uri
 
-    args = dict(descr=descr, prio=prio, scope=scope)
+    if action == 'post':
+        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
-    proposed = dict((k, v.lower()) for k, v in args.iteritems()
-                    if v is not None)
+    elif action == 'get':
+        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
-
-    new_contract_mo = None
-    if state == 'present':
-        if delta or not existing:
-            con_args = {}
-            for key, value in proposed.iteritems():
-                con_args[key] = delta.get(key, existing.get(key))
-            new_contract_mo = BrCP(tenant_mo, name=name, **con_args)
-
-    elif state == 'absent':
-        if existing:
-            new_contract_mo = BrCP(tenant_mo, name=name)
-            new_contract_mo.delete()
-
+    ''' Check response status and parse it for status || Throw an error otherwise '''
+    response = req.text
+    status = req.status_code
     changed = False
-    results = {}
-    xmldoc = ''
-    if new_contract_mo:
-        xmldoc = toXMLStr(new_contract_mo)
-        if module.check_mode:
-            module.exit_json(changed=True, xmldoc=xmldoc)
-        else:
+
+    if req.status_code == 200:
+        if action == 'post':
             changed = True
-            config_req = ConfigRequest()
-            config_req.addMo(new_contract_mo)
-            moDir.commit(config_req)
-            results['new'] = get_existing(moDir, tenant, name)
+        else:
+            changed = False
 
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['state'] = state
-    results['xmldoc'] = xmldoc
+    else:
+        module.fail_json(msg='error issuing api request',response=response, status=status)
+
+    results = {}
+    results['status'] = status
+    results['response'] = response
     results['changed'] = changed
-
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-main()
+
+if __name__ == '__main__':
+    main()
+'''Code End'''

@@ -1,62 +1,54 @@
 #!/usr/bin/python
-
-# Copyright 2015 Jason Edelman <jason@networktocode.com>
-# Network to Code, LLC
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#    http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 DOCUMENTATION = '''
+
 ---
 
 module: aci_context
 short_description: Manage private networks, contexts, in an ACI fabric
 description:
-    - Offers ability to manage private networks. Each context is a private
-      network associated to a tenant, i.e. VRF
-author: Jason Edelman (@jedelman8)
+    -  Offers ability to manage private networks. Each context is a private network associated to a tenant, i.e. VRF
+author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
-    - Cobra SDK
-notes:
-    - Tenant must be exist prior to using this module
+notes: Tenant must be exist prior to using this module
 options:
-    name:
+        action:
+                description:
+                        - post or get
+    tenant_name:
         description:
-            - Name of context (private network / VRF)
+            - Tenant Name
         required: true
         default: null
         choices: []
         aliases: []
-    descr:
+   vrf_name:
         description:
-            - description of context (private network)
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    tenant:
-        description:
-            - name of tenant the private network will be associated to
+            - Context Name
         required: true
         default: null
         choices: []
         aliases: []
-    state:
+   policy_control_direction:
         description:
-            - Desired state of the context
+            - Policy Control Direction
+        required:false
+        default: enforced
+        choices: ['enforced','unenforced']
+        aliases: []
+    policy_control_preference:
+        description:
+            - Policy Control Preference
+        required:false
+        default: ingress
+        choices: ['egress', 'ingress']
+        aliases: []
+     descr:
+        description:
+            - Description for the AEP
         required: false
-        default: present
-        choices: ['present', 'absent']
+        default: null
+        choices: []
         aliases: []
     host:
         description:
@@ -76,9 +68,9 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
-        aliases: []
+        aliases:[]                                                                  
     protocol:
         description:
             - Dictates connection protocol to use
@@ -89,139 +81,105 @@ options:
 '''
 
 EXAMPLES = '''
-# ensure context for tenant exists (private network)
-- aci_context: name=ACILab_VRF descr='ACILab VRF' tenant=ACILab host={{ inventory_hostname }} username={{ user }} password={{ pass }}
 
-# ensure context for tenant exists (private network)
-- aci_context: name=ACILab_VRF tenant=ACILab state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
+    aci_context:
+       action: "{{ action }}"
+       vrf_name: "{{ vrf_name }}"
+       tenant_name: "{{ tenant_name }}"
+       policy_control_direction: "{{  policy_control_direction }}"
+       policy_control_preference: "{{ policy_control_preference }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
 
 '''
 import socket
-
-try:
-    HAS_COBRA = True
-    from cobra.mit.access import MoDirectory
-    from cobra.mit.session import LoginSession
-    from cobra.mit.request import ConfigRequest
-    from cobra.model.fv import Tenant
-    from cobra.model.fv import Ctx
-    from cobra.internal.codec.xmlcodec import toXMLStr
-except ImportError as ie:
-    HAS_COBRA = False
-
-
-KEY_MAP = {
-    'descr': 'descr',
-    'name': 'name'
-}
-
-
-def get_attributes(keymap, mo):
-    resource = {}
-    if mo:
-        for mine, cobra in keymap.iteritems():
-            value = getattr(mo, cobra)
-            if value:
-                resource[mine] = value
-    return resource
-
-
-def get_existing(moDir, tenant, name):
-    mo = moDir.lookupByDn('uni/tn-{0}/ctx-{1}'.format(tenant, name))
-    return get_attributes(KEY_MAP, mo)
-
+import json
+import requests
 
 def main():
 
+    ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(type='str', required=True),
-            tenant=dict(type='str', required=True),
-            descr=dict(type='str'),
-            state=dict(choices=['present', 'absent'], default='present'),
+            action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='C1sco12345'),
-            protocol=dict(choices=['http', 'https'], default='https')
+            password=dict(type='str', default='Cisco!123'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+            vrf_name=dict(type="str", required=False),
+            tenant_name=dict(type="str", required=False),
+            descr=dict(type="str", required=False),
+            policy_control_direction=dict(choices=['enforced','unenforced'], required=False, default="enforce"),
+            policy_control_preference=dict(choices=['egress','ingress'], required=False, default="ingress"),
         ),
-        supports_check_mode=True
+        supports_check_mode=False
     )
-    if not HAS_COBRA:
-        module.fail_json(msg='Ensure you have the ACI Cobra SDK installed',
-                         error=str(ie))
 
+    vrf_name=module.params['vrf_name']
+    tenant_name=module.params['tenant_name']
+    descr=module.params['descr']
+    policy_control_direction=module.params['policy_control_direction']
+    policy_control_preference=module.params['policy_control_preference']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
+    action = module.params['action']
+    post_uri ='api/mo/uni/tn-'+tenant_name+'/ctx-'+vrf_name+'.json'
+    get_uri = 'api/node/class/fvCtx.json'
 
-    state = module.params['state'].lower()
+    ''' Config payload to enable the physical interface '''
+    config_data = {"fvCtx":{"attributes":{"name":vrf_name, "descr":descr, "pcEnfDir":policy_control_direction, "pcEnfPref":policy_control_preference }}}
+    payload_data = json.dumps(config_data)
 
-    name = module.params['name']
-    tenant = module.params['tenant']
-    descr = module.params['descr']
-
+    ''' authentication || || Throw an error otherwise'''
     apic = '{0}://{1}/'.format(protocol, host)
+    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
+    url=apic+'api/aaaLogin.json'
+    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
 
-    session = LoginSession(apic, username, password)
-    moDir = MoDirectory(session)
-    moDir.login()
+    if authenticate.status_code != 200:
+        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
 
-    uniMo = moDir.lookupByDn('uni')
-    tenant_filter = 'eq(fvTenant.name, "{0}" )'.format(tenant)
-    tenant_obj_list = moDir.lookupByClass('fvTenant', propFilter=tenant_filter)
-    ten = tenant_obj_list[0] if tenant_obj_list else None
+    ''' Sending the request to APIC '''
+    if post_uri.startswith('/'):
+        post_uri = post_uri[1:]
+    post_url = apic + post_uri
 
-    if ten:
-        fvTenantMo = Tenant(uniMo, tenant)
-    else:
-        module.fail_json(msg='tenant needs to be created first.')
+    if get_uri.startswith('/'):
+        get_uri = get_uri[1:]
+    get_url = apic + get_uri
 
-    existing = get_existing(moDir, tenant, name)
+    if action == 'post':
+        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
-    proposed = dict(name=name, descr=descr)
+    elif action == 'get':
+        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
-    delta = dict(set(proposed.iteritems()).difference(existing.iteritems()))
-
-    new_con_mo = None
-    if state == 'present':
-        if delta or not existing:
-            config_args = {}
-            for key, value in KEY_MAP.iteritems():
-                config_value = delta.get(key, existing.get(key, None))
-                if config_value:
-                    config_args[value] = config_value
-            if 'name' in config_args.keys():
-                config_args.pop('name')
-            new_con_mo = Ctx(fvTenantMo, name=name, **config_args)
-
-    elif state == 'absent':
-        if existing:
-            new_con_mo = Ctx(fvTenantMo, name=name)
-            new_con_mo.delete()
-
+    ''' Check response status and parse it for status || Throw an error otherwise '''
+    response = req.text
+    status = req.status_code
     changed = False
-    results = {}
-    xmldoc = ''
-    if new_con_mo:
-        xmldoc = toXMLStr(new_con_mo)
-        if module.check_mode:
-            module.exit_json(changed=True, xmldoc=xmldoc)
-        else:
+
+    if req.status_code == 200:
+        if action == 'post':
             changed = True
-            config_req = ConfigRequest()
-            config_req.addMo(new_con_mo)
-            moDir.commit(config_req)
-            results['new'] = get_existing(moDir, tenant, name)
+        else:
+            changed = False
 
-    results['proposed'] = proposed
-    results['existing'] = existing
-    results['state'] = state
-    results['xmldoc'] = xmldoc
+    else:
+        module.fail_json(msg='error issuing api request',response=response, status=status)
+
+    results = {}
+    results['status'] = status
+    results['response'] = response
     results['changed'] = changed
-
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-main()
+try:
+    main()
+except:
+    pass

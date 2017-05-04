@@ -3,49 +3,37 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_enable_physical_interface
+module: aci_monitoring_policy
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
-author: 
+author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
-    - Cobra SDK
 notes:
-    - Physical Interface Must Exist Prior To Using This Module
+    - Tenant should already exist
 options:
-    state:
+	action:
+		description:
+			- post or get
+    tenant_name:
         description:
-            - Used to check if being enabled or disabled
+            - Tenant Name
         required: true
         default: null
         choices: []
         aliases: []
-    action:
+    monitoring_policy:
         description:
-            - http verb, i.e. post or get
-        required: true
-        default: null
-        choices: ['post', 'get']
-        aliases: []
-    pod_id:
-        description:
-            - APIC pod id
+            - Monitoring Policy name
         required: true
         default: null
         choices: []
         aliases: []
-    node_id:
+    descr:
         description:
-            - Fabric node id
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    port_id:
-        description:
-            - physical interface port name
-        required: true
+            - Description for monitoring policy
+        required: false
         default: null
         choices: []
         aliases: []
@@ -67,7 +55,7 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
     protocol:
@@ -79,10 +67,16 @@ options:
         aliases: []
 '''
 
-EXAMPLES = '''
+EXAMPLES =  '''
 
-# enable physical interface
-- aci_enable_physical_interface: state={{state}} action=post pod_id={{ pod_id }} node_id={{ node_id }} port_name={{ port_name }} host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+    aci_monitoring_policy:
+        action: "{{ action }}"
+        tenant_name: "{{ tenant_name }}"
+	monitoring_policy: "{{ monitoring_policy }}"
+        descr: "{{ descr }}"
+        host= "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
 
 '''
 
@@ -90,61 +84,65 @@ import socket
 import json
 import requests
 
+
 def main():
+    
     ''' Ansible module to take all the parameter values from the playbook '''
+
     module = AnsibleModule(
         argument_spec=dict(
-	        state=dict(type='str', required=True),
-            action=dict(choices=['post', 'get']),
-            pod_id=dict(type='str', required=True),
-            node_id=dict(type='str', required=True),
-            port_name=dict(type='str', required=True),
+            action=dict(choices=['get', 'post'], required=False),
+            tenant_name=dict(type='str'),
+            monitoring_policy=dict(type='str'),
+            descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
-            protocol=dict(choices=['http', 'https'], default='http')
-        ),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+        ), 
         supports_check_mode=False
     )
 
-    state = module.params['username']
+    host = socket.gethostbyname(module.params['host'])
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-
     action = module.params['action']
-    pod_id = module.params['pod_id']
-    node_id = module.params['node_id']
-    port_name = module.params['port_name']
+    
+    
+    tenant_name = module.params['tenant_name']
+    monitoring_policy = module.params['monitoring_policy']
+    descr = module.params['descr']
+    descr=str(descr)
 
-    post_uri = '/api/node/mo/uni/fabric/outofsvc.json'
-    get_uri = '/api/node/mo/topology/pod-'+pod_id+'/node-'+node_id+'/sys/phys-['+port_name+'].json'
+    post_uri = '/api/mo/uni/tn-' +tenant_name + '/monepg-'  + monitoring_policy + '.json'
+    get_uri = '/api/node/class/monEPGPol.json'
 
-    ''' Config payload to enable the physical interface '''
     config_data = {
-        "fabricRsOosPath": {
-            "attributes": {
-                "dn":"uni/fabric/outofsvc/rsoosPath-[topology/pod-"+pod_id+"/paths-"+node_id+"/pathep-["+port_name+"]]",
-                "status":"deleted"       
-            },
-            "children": []
-        }
-    }
-    payload_data = json.dumps(config_data) 
+         "monEPGPol": {
+             "attributes": {
+                "descr": descr,
+                "name": monitoring_policy
+               }
+         } 
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = "{0}://{1}/".format(protocol, host)
+     } 
+    payload_data = json.dumps(config_data)
 
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
+    apic = '{0}://{1}/'.format(protocol, host)
 
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    auth = dict(aaaUser=dict(attributes=dict(name=username,
+                pwd=password)))
+    url = apic + 'api/aaaLogin.json'
+
+    authenticate = requests.post(url, data=json.dumps(auth), timeout=2,
+                                 verify=False)
 
     if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
+        module.fail_json(msg='could not authenticate to apic',
+                         status=authenticate.status_code,
+                         response=authenticate.text)
 
-    ''' Sending the request to APIC '''
     if post_uri.startswith('/'):
         post_uri = post_uri[1:]
     post_url = apic + post_uri
@@ -158,9 +156,8 @@ def main():
                             data=payload_data, verify=False)
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
-                           data=payload_data, verify=False) 
-    
-    ''' Check response status and parse it for status || Throw an error otherwise '''
+                           data=payload_data, verify=False)
+
     response = req.text
     status = req.status_code
 
