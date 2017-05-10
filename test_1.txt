@@ -1,0 +1,196 @@
+{
+    "imdata": [
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.0.1", 
+                    "bootstrapState": "none", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:42:22.417+00:00", 
+                    "dn": "topology/pod-1/node-1/sys", 
+                    "etepAddr": "0.0.0.0", 
+                    "fabricDomain": "ACI Fabric1", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "1", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "fc00::1", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-02-27T14:42:48.991+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "apic1", 
+                    "nameAlias": "", 
+                    "oobMgmtAddr": "10.23.248.85", 
+                    "oobMgmtAddr6": "fe80::1a8b:9dff:fea3:6e58", 
+                    "podId": "1", 
+                    "remoteNetworkId": "0", 
+                    "remoteNode": "no", 
+                    "role": "controller", 
+                    "serial": "FCH1927V1QX", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "71:00:02:54.000"
+                }
+            }
+        }, 
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.64.92", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:47:24.391+00:00", 
+                    "dn": "topology/pod-1/node-102/sys", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "102", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "0.0.0.0", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-05-04T16:01:58.572+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "Leaf2", 
+                    "oobMgmtAddr": "0.0.0.0", 
+                    "oobMgmtAddr6": "0.0.0.0", 
+                    "podId": "1", 
+                    "role": "leaf", 
+                    "serial": "SAL1815Q7ZT", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "04:22:44:34.000"
+                }
+            }
+        }, 
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.64.95", 
+                    "bootstrapState": "none", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:45:49.084+00:00", 
+                    "dn": "topology/pod-1/node-101/sys", 
+                    "etepAddr": "0.0.0.0", 
+                    "fabricDomain": "ACI Fabric1", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "101", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "::", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-02-27T14:45:37.169+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "Leaf1", 
+                    "nameAlias": "", 
+                    "oobMgmtAddr": "0.0.0.0", 
+                    "oobMgmtAddr6": "::", 
+                    "podId": "1", 
+                    "remoteNetworkId": "0", 
+                    "remoteNode": "no", 
+                    "role": "leaf", 
+                    "serial": "SAL1934MR08", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "76:22:46:54.000"
+                }
+            }
+        }, 
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.64.91", 
+                    "bootstrapState": "none", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:44:54.627+00:00", 
+                    "dn": "topology/pod-1/node-103/sys", 
+                    "etepAddr": "0.0.0.0", 
+                    "fabricDomain": "ACI Fabric1", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "103", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "::", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-02-27T15:01:05.969+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "Leaf3", 
+                    "oobMgmtAddr": "0.0.0.0", 
+                    "oobMgmtAddr6": "::", 
+                    "podId": "1", 
+                    "remoteNetworkId": "0", 
+                    "remoteNode": "no", 
+                    "role": "leaf", 
+                    "serial": "SAL1814PTC6", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "76:00:38:54.000"
+                }
+            }
+        }, 
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.64.93", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:44:14.869+00:00", 
+                    "dn": "topology/pod-1/node-202/sys", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "202", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "0.0.0.0", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-02-27T14:59:30.926+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "Spine2", 
+                    "oobMgmtAddr": "0.0.0.0", 
+                    "oobMgmtAddr6": "0.0.0.0", 
+                    "podId": "1", 
+                    "role": "spine", 
+                    "serial": "SAL2014N5TK", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "70:23:49:01.000"
+                }
+            }
+        }, 
+        {
+            "topSystem": {
+                "attributes": {
+                    "address": "10.0.64.94", 
+                    "childAction": "", 
+                    "configIssues": "", 
+                    "currentTime": "2017-05-09T14:46:14.103+00:00", 
+                    "dn": "topology/pod-1/node-201/sys", 
+                    "fabricId": "1", 
+                    "fabricMAC": "00:22:BD:F8:19:FF", 
+                    "id": "201", 
+                    "inbMgmtAddr": "0.0.0.0", 
+                    "inbMgmtAddr6": "0.0.0.0", 
+                    "lcOwn": "local", 
+                    "modTs": "2017-02-27T15:00:00.778+00:00", 
+                    "mode": "unspecified", 
+                    "monPolDn": "uni/fabric/monfab-default", 
+                    "name": "Spine1", 
+                    "oobMgmtAddr": "0.0.0.0", 
+                    "oobMgmtAddr6": "0.0.0.0", 
+                    "podId": "1", 
+                    "role": "spine", 
+                    "serial": "SAL2004XMKM", 
+                    "state": "in-service", 
+                    "status": "", 
+                    "systemUpTime": "70:23:50:07.000"
+                }
+            }
+        }
+    ], 
+    "totalCount": "6"
+}

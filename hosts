@@ -3,7 +3,7 @@ apic                     # single APIC in system- can also use IP if no DNS or /
 
 
 [all:vars]
-inventory_hostname = "172.31.186.184"
+inventory_hostname = "10.23.248.85"
 user = 'admin'
-pass = 'Cisco!123' 
+pass = 'cisco123' 
 
