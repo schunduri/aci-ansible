@@ -103,6 +103,7 @@ def main():
     app_profile_name=module.params['app_profile_name']
     tenant_name=module.params['tenant_name']
     descr=module.params['descr']
+    descr = str(descr)
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
