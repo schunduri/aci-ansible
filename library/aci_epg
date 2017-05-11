@@ -122,7 +122,7 @@ def main():
             app_profile_name=dict(type="str"),
             tenant_name=dict(type="str"),
             descr=dict(type="str", required=False),
-            priority=dict(type="str", required=False),
+            priority=dict(type="str", required=False, default='unspecified'),
             intra_epg_isolation=dict(choices=['enforced','unenforced'], default='unenforced'),
         ),
         supports_check_mode=False
