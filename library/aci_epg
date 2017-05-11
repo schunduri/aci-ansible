@@ -91,6 +91,7 @@ EXAMPLES = '''
 
     aci_epg:
        action: "{{ action }}"
+       epg_name: ""{{ epg_name }}"
        app_profile_name: "{{ app_profile_name }}"
        tenant_name: "{{ tenant_name }}"
        priority: "{{ priority }}"
