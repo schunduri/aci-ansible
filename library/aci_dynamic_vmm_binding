@@ -1,5 +1,21 @@
 #!/usr/bin/python
-
+'''
+Example = 
+aci_vmm_domain_dynamic_binding:
+           action: "{{ action }}"
+           app_profile_name: "{{ app_profile_name }}"
+           tenant_name: "{{ tenant_name }}"
+           epg_name: "{{ epg_name }}"
+           domain_profile: "{{ domain_profile }}"
+           deploy_immediacy: "{{ deploy_immediacy }}"
+	   resolution_immediacy: "{{ resolution_immediacy }}"
+	   netflow: "{{ netflow }}"
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+	   protocol: "{{ protocol }}"
+	   
+'''
 import socket
 import json
 import requests
