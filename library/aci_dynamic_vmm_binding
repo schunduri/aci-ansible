@@ -1,7 +1,7 @@
 #!/usr/bin/python
 '''
 Example = 
-aci_vmm_domain_dynamic_binding:
+aci_dynamic_vmm_binding:
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
            tenant_name: "{{ tenant_name }}"
