@@ -11,9 +11,9 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes:
 options:
-        action:
-                description:
-                        - post or get
+     action:
+         description:
+             - post or get
     tenant_name:
         description:
             - Tenant Name
@@ -46,7 +46,7 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
     protocol:
@@ -67,6 +67,7 @@ EXAMPLES = '''
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 
@@ -82,8 +83,8 @@ def main():
             action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
-            protocol=dict(choices=['http', 'https'], default='http'),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
             tenant_name=dict(type="str", required=False),
             descr=dict(type="str", required=False),
         ),
@@ -92,6 +93,7 @@ def main():
 
     tenant_name=module.params['tenant_name']
     descr=module.params['descr']
+    descr=str(descr)
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']

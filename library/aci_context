@@ -92,6 +92,7 @@ EXAMPLES = '''
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 import socket
@@ -106,7 +107,7 @@ def main():
             action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
+            password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
             vrf_name=dict(type="str", required=False),
             tenant_name=dict(type="str", required=False),
@@ -120,6 +121,7 @@ def main():
     vrf_name=module.params['vrf_name']
     tenant_name=module.params['tenant_name']
     descr=module.params['descr']
+    descr = str(descr)
     policy_control_direction=module.params['policy_control_direction']
     policy_control_preference=module.params['policy_control_preference']
     username = module.params['username']
