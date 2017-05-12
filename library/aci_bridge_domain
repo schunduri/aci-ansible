@@ -112,22 +112,22 @@ options:
 EXAMPLES =  '''
 
  aci_bridge_domain:
-     action= "{{ action }}"
-     tenant_name= "{{ tenant_name }}" 
-     bd_name= "{{ bd_name }}" 
-     arp_flooding= "{{ arp_flooding }}"
-     l2_unknown_unicast= "{{ l2_unknown_unicast }}"
-     l3_unknown_multicast= "{{ l3_unknown_multicast }}"
-     multi_dest= "{{ multi_dest }}" 
-     l3_out= "{{ l3_out }}"
+     action: "{{ action }}"
+     tenant_name: "{{ tenant_name }}" 
+     bd_name: "{{ bd_name }}" 
+     arp_flooding: "{{ arp_flooding }}"
+     l2_unknown_unicast: "{{ l2_unknown_unicast }}"
+     l3_unknown_multicast: "{{ l3_unknown_multicast }}"
+     multi_dest: "{{ multi_dest }}" 
+     l3_out: "{{ l3_out }}"
      gateway_ip: "{{ gateway_ip }}"
      subnet_mask: "{{ subnet_mask }}"
      scope: "{{ scope }}"
      dhcp_name: "{{ dhcp_name }}"
      dhcp_scope: "{{ dhcp_scope }}"
-     host= "{{ inventory_hostname }}"
-     username= "{{ username }}"
-     password= "{{ password }}"
+     host: "{{ inventory_hostname }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
 
 
 '''
@@ -146,9 +146,10 @@ def main():
         bd_name=dict(type='str', required=True),
         arp_flooding=dict(choices=['yes','no'], default="yes"),
         l2_unknown_unicast=dict(choices=['proxy','flood'], default='proxy'),
-        l3_unknown_multicast=dict(choices=['flood','opt-flood']),
+        l3_unknown_multicast=dict(choices=['flood','opt-flood'], default='flood'),
         multi_dest=dict(choices=['bd-flood','drop','encap-flood'], default='bd-flood'),
         l3_out=dict(type='str'),
+        vrf_name=dict(type='str'),
         gateway_ip=dict(type='str'),
         subnet_mask=dict(type='str'),
         scope=dict(type='str',default='private'),
@@ -156,7 +157,7 @@ def main():
         dhcp_scope=dict(choices=['tenant','infra'],default='infra'),
         host=dict(required=True),
         username=dict(type='str', default='admin'),
-        password=dict(type='str', default='Cisco!123'),
+        password=dict(type='str'),
         protocol=dict(choices=['http', 'https'], default='https'),
         ), supports_check_mode=False)
 
@@ -168,6 +169,7 @@ def main():
     l3_unknown_multicast = module.params['l3_unknown_multicast']
     multi_dest = module.params['multi_dest']
     l3_out = module.params['l3_out']
+    vrf_name = module.params['vrf_name']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
@@ -200,6 +202,13 @@ def main():
                      "attributes":{  
                         "tnL3extOutName":l3_out
                            }
+                      }
+                  },
+                  {
+                      "fvRsCtx": {
+                          "attributes": {
+                              "tnFvCtxName": vrf_name
+                         }
                       }
                   },
                   {

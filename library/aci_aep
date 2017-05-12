@@ -68,6 +68,7 @@ EXAMPLES =  '''
          host: "{{ inventory_hostname }}"
          username: "{{ username }}"
          password: "{{ password }}"
+         protocol: "{{ protocol }}"
 
 '''
 

@@ -12,9 +12,9 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
+    action:
+        description:
+            - post or get
     tenant_name:
         description:
             - Tenant Name
@@ -111,8 +111,8 @@ def main():
             vrf_name=dict(type="str", required=False),
             tenant_name=dict(type="str", required=False),
             descr=dict(type="str", required=False),
-            policy_control_direction=dict(choices=['enforced','unenforced'], required=False, default="enforce"),
-            policy_control_preference=dict(choices=['egress','ingress'], required=False, default="ingress"),
+            policy_control_preference=dict(choices=['enforced','unenforced'], required=False, default="enforced"),
+            policy_control_direction=dict(choices=['egress','ingress'], required=False, default="ingress"),
         ),
         supports_check_mode=False
     )

@@ -11,9 +11,9 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
+    action:
+        description:
+            - post or get
     tenant_name:
         description:
             - Tenant Name
@@ -82,23 +82,23 @@ options:
             - Dictates connection protocol to use
         required: false
         default: https
-        choices: [‘http', 'https']
+        choices: ['http', 'https']
         aliases: []
 '''
 
 EXAMPLES = '''
 
     aci_contract:
-       action: "{{ action }}"
-       contract_name: "{{ app_profile_name }}"
-       tenant_name: "{{ tenant_name }}"
-       priority: "{{ priority }}"
-       scope: "{{ scope }}"
-       target: "{{ target }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
+       action: '{{ action }}'
+       contract_name: '{{ app_profile_name }}'
+       tenant_name: '{{ tenant_name }}'
+       priority: '{{ priority }}'
+       scope: '{{ scope }}'
+       target: '{{ target }}'
+       descr: '{{ descr }}'
+       host: '{{ inventory_hostname }}'
+       username: '{{ user }}'
+       password: '{{ pass }}'
 
 '''
 import socket
@@ -131,6 +131,7 @@ def main():
     scope=module.params['scope']
     target=module.params['target']
     descr=module.params['descr']
+    descr=str(descr)
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']

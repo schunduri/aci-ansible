@@ -100,7 +100,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             node_id=dict(type='int'),
-            command=dict(choices=['fantray','interfaces','power-supplies','firmware','supervisor-module','linecard-module','nodes'], default='nodes'),
+            command=dict(choices=['fantray','interfaces','power-supplies','firmware','supervisor-module','linecard-module','nodes','all'], default='all'),
             level=dict(choices=['brief','detail'], default = 'brief'),
             filename=dict(type='str', required = False),
 	    host=dict(required=True),
@@ -126,6 +126,8 @@ def main():
  
     if command == 'nodes':
       get_uri = 'api/node/class/topSystem.json'
+    elif command == 'all':
+      for each item in 
     else:
       get_uri = request_get(level,mo_class,node_id)
 

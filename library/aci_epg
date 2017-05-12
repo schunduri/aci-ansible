@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 DOCUMENTATION = '''
 ---
 
@@ -95,6 +96,7 @@ EXAMPLES = '''
        tenant_name: "{{ tenant_name }}"
        priority: "{{ priority }}"
        intra_epg_isolation: "{{ intra_epg_isolation }}"
+       bd_name: "{{ bd_name }}"
        descr: "{{ descr }}"
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
@@ -118,10 +120,16 @@ def main():
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='http'),
             epg_name=dict(type="str"),
+            contract_name_provider=dict(type="str"),
+            contract_name_consumer = dict(type="str"),
+            provider_consumer=dict(choices=['provider','consumer','both'], required=False),
+            priority_provider = dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
+            priority_consumer = dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
+            bd_name=dict(type="str"),
             app_profile_name=dict(type="str"),
             tenant_name=dict(type="str"),
             descr=dict(type="str", required=False),
-            priority=dict(type="str", required=False),
+            priority=dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
             intra_epg_isolation=dict(choices=['enforced','unenforced'], default='unenforced'),
         ),
         supports_check_mode=False
@@ -130,28 +138,139 @@ def main():
     epg_name=module.params['epg_name']
     app_profile_name=module.params['app_profile_name']
     tenant_name=module.params['tenant_name']
+    bd_name = module.params['bd_name']
     descr=module.params['descr']
-    priority=module.params['priority']
+    descr=str(descr)
+    contract_name_provider = module.params['contract_name_provider']
+    contract_name_consumer = module.params['contract_name_consumer']
+    provider_consumer = module.params['provider_consumer']
+    priority_provider = module.params['priority_provider']
+    priority_consumer = module.params['priority_consumer']
+    priority = module.params['priority']
     intra_epg_isolation=module.params['intra_epg_isolation']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
     action = module.params['action']
+    
+    ''' Config payload to enable the physical interface '''
+    if provider_consumer == "provider":
+       config_data = {
+        "fvAEPg":{
+          "attributes":{
+             "name": epg_name,
+             "descr": descr,
+             "prio": priority,
+             "pcEnfPref": intra_epg_isolation
+                  },
+            "children": [{
+                    "fvRsBd":{
+                      "attributes":{
+                          "tnFvBDName": bd_name
+                          }
+                     }
+                },
+                {
+                "fvRsProv":{
+                  "attributes":{
+                    "tnVzBrCPName": contract_name_provider,
+                    "prio" : priority_provider
+                    }
+                  } 
+                }
+
+           ]
+       }
+    }
+    elif provider_consumer == "consumer":
+        config_data = {
+            "fvAEPg": {
+                "attributes": {
+                    "name": epg_name,
+                    "descr": descr,
+                    "prio": priority,
+                    "pcEnfPref": intra_epg_isolation
+                },
+                "children": [{
+                    "fvRsBd": {
+                        "attributes": {
+                            "tnFvBDName": bd_name
+                        }
+                    }
+                },
+                 {
+                    "fvRsCons": {
+                         "attributes": {
+                              "tnVzBrCPName": contract_name_consumer,
+                               "prio": priority_consumer
+                            }
+                        }
+                    }
+
+                ]
+            }
+        }
+    elif provider_consumer == "both":
+       config_data = {
+            "fvAEPg": {
+                "attributes": {
+                    "name": epg_name,
+                    "descr": descr,
+                    "prio": priority,
+                    "pcEnfPref": intra_epg_isolation
+                },
+                "children": [{
+                    "fvRsBd": {
+                        "attributes": {
+                            "tnFvBDName": bd_name
+                        }
+                    }
+                },
+                    {
+                        "fvRsProv": {
+                            "attributes": {
+                                "tnVzBrCPName": contract_name_provider,
+                                "prio": priority_provider
+                        }
+                    }
+            },
+            {
+                "fvRsCons": {
+                    "attributes": {
+                        "tnVzBrCPName": contract_name_consumer,
+                        "prio": priority_consumer
+                    }
+                }
+            }
+
+          ]
+        }
+    }
+    else:
+        config_data = {
+            "fvAEPg": {
+                "attributes": {
+                    "name": epg_name,
+                    "descr": descr,
+                    "prio": priority,
+                    "pcEnfPref": intra_epg_isolation,
+                },
+                "children": [{
+                    "fvRsBd": {
+                        "attributes": {
+                            "tnFvBDName": bd_name,
+                        }
+                    }
+                }
+                ]
+            }
+      }
+
     post_uri ='api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name+'/epg-'+epg_name+'.json'
     get_uri = 'api/node/class/fvAEPg.json'
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {
-       "fvAEPg":{
-         "attributes":{
-            "name":epg_name,
-            "descr":descr,
-            "prio":priority,
-            "pcEnfPref":intra_epg_isolation,
-                 }
-            }
-      }
+    
     payload_data = json.dumps(config_data)
 
     ''' authentication || || Throw an error otherwise'''
@@ -203,3 +322,5 @@ from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
 '''Code End'''
+
+
