@@ -1,6 +1,98 @@
 #!/usr/bin/python
+DOCUMENTATION = '''
+---
+
+module: aci_dynamic_vmm_binding
+short_description: Direct access to the APIC API
+description:
+    - Offers direct access to the APIC API
+author: Cisco
+requirements:
+    - ACI Fabric 1.0(3f)+
+notes:
+options:
+    action:
+        description:
+            - post or get
+    tenant_name:
+        description:
+            - Tenant Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    app_profile_name:
+        description:
+            - Application Profile Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    epg_name:
+        description:
+            - End Point Group Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    domain_profile:
+        description:
+            - Domain Profile 
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    deploy_immediacy:
+        description:
+            - Deploy immediacy 
+        required: false
+        default: 'on-demand'
+        choices: ['immediate', 'on-demand']
+        aliases: []
+    resolution_immediacy:
+        description:
+            - Resolution immediacy 
+        required: false
+        default: 'immediate'
+        choices: ['immediate', 'on-demand', 'pre-provision']
+        aliases: []
+    netflow:
+        description:
+            - Netflow
+        required: false
+        default: 'disabled'
+        choices: ['enabled','disabled']
+        aliases: []
+    host:
+        description:
+            - IP Address or hostname of APIC resolvable by Ansible control host
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    username:
+        description:
+            - Username used to login to the switch
+        required: true
+        default: 'admin'
+        choices: []
+        aliases: []
+    password:
+        description:
+            - Password used to login to the switch
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    protocol:
+        description:
+            - Dictates connection protocol to use
+        required: false
+        default: https
+        choices: ['http', 'https']
+        aliases: []
 '''
-Example = 
+Example = '''
 aci_dynamic_vmm_binding:
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
