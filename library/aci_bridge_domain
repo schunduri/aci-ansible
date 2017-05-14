@@ -13,9 +13,13 @@ requirements:
 notes:
     - Tenant should already exist
 options:
-	action:
-		description:
-			- post or get
+   action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post', 'get']
+        aliases: []
    tenant_name:
         description:
             - Tenant Name
@@ -26,6 +30,13 @@ options:
    bd_name:
         description:
             - Bridge Domain
+        required: true
+        default: null
+        choices: []
+        aliases: []
+   vrf_name:
+        description:
+            - VRF name to associate to the Bridge Domain
         required: true
         default: null
         choices: []
@@ -115,10 +126,11 @@ EXAMPLES =  '''
      action: "{{ action }}"
      tenant_name: "{{ tenant_name }}" 
      bd_name: "{{ bd_name }}" 
+     vrf_name: "{{ vrf_name }}"
      arp_flooding: "{{ arp_flooding }}"
      l2_unknown_unicast: "{{ l2_unknown_unicast }}"
      l3_unknown_multicast: "{{ l3_unknown_multicast }}"
-     multi_dest: "{{ multi_dest }}" 
+     multi_dest: "{{ multi_dest }}"
      l3_out: "{{ l3_out }}"
      gateway_ip: "{{ gateway_ip }}"
      subnet_mask: "{{ subnet_mask }}"
@@ -141,7 +153,7 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post'], required=False),
+        action=dict(choices=['get', 'post']),
         tenant_name=dict(type='str', required=True),
         bd_name=dict(type='str', required=True),
         arp_flooding=dict(choices=['yes','no'], default="yes"),
@@ -153,7 +165,7 @@ def main():
         gateway_ip=dict(type='str'),
         subnet_mask=dict(type='str'),
         scope=dict(type='str',default='private'),
-        dhcp_name=dict(type="str"),
+        dhcp_name=dict(type='str'),
         dhcp_scope=dict(choices=['tenant','infra'],default='infra'),
         host=dict(required=True),
         username=dict(type='str', default='admin'),
