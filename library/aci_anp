@@ -12,9 +12,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must exist prior to using this module
 options:
-    action:
-         description:
-             - post or get
+   action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post', 'get']
+        aliases: []
    tenant_name:
         description:
             - Tenant Name
