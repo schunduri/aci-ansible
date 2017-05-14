@@ -114,6 +114,7 @@ EXAMPLES = '''
 	host: "{{ inventory_hostname }}"
 	username: "{{ user }}"
 	password: "{{ pass }}"
+	protocol: "{{ protocol }}"
 
 '''
 
@@ -136,7 +137,7 @@ def main():
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='http')
+            protocol=dict(choices=['http', 'https'], default='https')
         ),
         supports_check_mode=False
     )
