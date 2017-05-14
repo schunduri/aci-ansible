@@ -12,10 +12,14 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-    action:
+  action:
         description:
             - post or get
-    tenant_name:
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
+  tenant_name:
         description:
             - Tenant Name
         required: true
@@ -33,17 +37,17 @@ options:
         description:
             - Policy Control Direction
         required:false
-        default: enforced
-        choices: ['enforced','unenforced']
+        default: ingress
+        choices: ['egress','ingress']
         aliases: []
-    policy_control_preference:
+   policy_control_preference:
         description:
             - Policy Control Preference
         required:false
-        default: ingress
-        choices: ['egress', 'ingress']
+        default: enforced
+        choices: ['enforced', 'unenforced']
         aliases: []
-     descr:
+    descr:
         description:
             - Description for the AEP
         required: false
@@ -112,8 +116,8 @@ def main():
             vrf_name=dict(type="str", required=False),
             tenant_name=dict(type="str", required=False),
             descr=dict(type="str", required=False),
-            policy_control_preference=dict(choices=['enforced','unenforced'], required=False, default="enforced"),
-            policy_control_direction=dict(choices=['egress','ingress'], required=False, default="ingress"),
+            policy_control_preference=dict(choices=['enforced','unenforced'], required=False, default='enforced'),
+            policy_control_direction=dict(choices=['egress','ingress'], required=False, default='ingress'),
         ),
         supports_check_mode=False
     )
