@@ -151,7 +151,7 @@ def main():
             target=dict(type="str", required=False, default='unspecified'),
             descr=dict(type="str", required=False),
             filter_name=dict(type="str", required=False),
-            directive=dict(type="str", required=False),
+            directive=dict(type="str", required=False, default='none'),
         ),
         supports_check_mode=False
     )
