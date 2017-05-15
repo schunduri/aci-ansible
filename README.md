@@ -37,7 +37,7 @@ Offers ability to manage private networks. Each context is a private network ass
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
-| password  |   yes  |  null  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   no  |  https  | <ul>  </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
 | protocol  |   yes  |  | <ul><li>http</li>  <li>https</li></ul> |  Dictates connection protocol |
 | action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
@@ -187,15 +187,24 @@ Manages bridge domains in an ACI fabric
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
-| subnet  |   no  |  | <ul></ul> |  name of subnet that is paired to bridge domain  |
-| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
-| descr  |   no  |  | <ul></ul> |  description of bridge domain  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the bridge domain  |
-| context  |   yes  |  | <ul></ul> |  name of context (private network / VRF)  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
-| tenant  |   yes  |  | <ul></ul> |  name of tenant this bridge domain will be part of  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
+| tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
+| vrf_name | yes | | <ul></ul> | Name of the context the bridge domain will be associated to |
+| descr  |   no  |  | <ul></ul> |  description of bridge domain  |
+| arp_flooding | no | yes | <ul><li>yes</li> <li>no</li></ul> | Enable or Disable ARP flooding |
+| l2_unknown_unicast | no | proxy | <ul><li>flood</li> <li>proxy</li></ul> | L2 Unknown Unicast |
+| l3_unknown_multicast | no | flood | <ul><li>opt-flood</li><li>flood</li></ul> | L3 Unknown Multicast |
+| multi_dest | no | bd-flood | <ul> <li>bd-flood</li><li>drop</li><li>encap-flood</li> </ul> | Multi Destination Flooding |
+| l3_out | yes | | <ul></ul> | L3 out association with the Bridge Domain |
+| gateway_ip | yes | | <ul></ul> | IP address of the gateway |
+| subnet_mask |  yes  |  | <ul></ul> |  subnet mask value  |
+| scope | no | private | <ul></ul> | Scope of  the subnet | 
+| dhcp_name | yes | | <ul></ul> | Name  of the DHCP Relay Label |
+| dhcp_scope | no | infra | <ul><li> tenant <li> <li> infra </li> </ul> | Scope of the DHCP Relay label |
 
 
  
@@ -203,24 +212,34 @@ Manages bridge domains in an ACI fabric
 
 ```
 
-# ensure bridge domain 1 exists
-- aci_bridge_domain: name=ACILab_BD1 context=ACILab_VRF subnet=10.10.10.1/24 tenant=ACILab state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure bd 1 doesn't exist
-- aci_bridge_domain: name=ACILab_BD1 context=ACILab_VRF tenant=ACILab state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
+aci_bridge_domain:
+     action: "{{ action }}"
+     tenant_name: "{{ tenant_name }}" 
+     bd_name: "{{ bd_name }}" 
+     vrf_name: "{{ vrf_name }}"
+     arp_flooding: "{{ arp_flooding }}"
+     l2_unknown_unicast: "{{ l2_unknown_unicast }}"
+     l3_unknown_multicast: "{{ l3_unknown_multicast }}"
+     multi_dest: "{{ multi_dest }}" 
+     l3_out: "{{ l3_out }}"
+     gateway_ip: "{{ gateway_ip }}"
+     subnet_mask: "{{ subnet_mask }}"
+     scope: "{{ scope }}"
+     dhcp_name: "{{ dhcp_name }}"
+     dhcp_scope: "{{ dhcp_scope }}"
+     host: "{{ inventory_hostname }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     protocol: "{{ protocol }}"
 
 ```
 
 
 #### Notes
 
-- Tenant and context must be exist prior to using this module
+- Tenant and context must exist prior to using this module
 
 - One subnet can be added per task (per module call)
-
-- state=absent removes complete bridge domain configuration including all subnets
-
 
 ---
 
@@ -240,40 +259,39 @@ Manages initial contracts (does not include contract subjs)
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| name  |   yes  |  | <ul></ul> |  Name of the contract  |
-| prio  |   no  |  | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the contract  |
+| action | yes | | <ul><li>Post</li> <li>Get</li> </ul> | Http verbs, i.e. Get or Post |
+| contract_name  |   yes  |  | <ul></ul> |  Name of the contract  |
+| tenant_name  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
+| priority |   no  | unspecified | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
+| target | no | unspecified | <ul></ul> |  Contract Target | 
+| scope  |   no  | context  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contract  |
 | descr  |   no  |  | <ul></ul> |  description of contract  |
-| scope  |   no  |  | <ul> <li>application-profile</li>  <li>context</li>  <li>global</li>  <li>tenant</li> </ul> |  scope of contract  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
-| tenant  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
-
 
  
 #### Examples
 
 ```
-# ensure contract exists
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure contract exists with added params
-- aci_contract: name=web-contract descr='web contracy by ansible' tenant=customer_1 prio=level2 scope=context host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure contract does not exist
-- aci_contract: name=web-contract tenant=customer_1 state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-
+ aci_contract:
+       action: "{{ action }}"
+       contract_name: "{{ contract_name }}"
+       tenant_name: "{{ tenant_name }}"
+       priority: "{{ priority }}"
+       scope: "{{ scope }}"
+       target: "{{ target }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 ```
 
 
 #### Notes
 
-- Tenant and context must be exist prior to using this module
-
-- state=absent removes complete contract including the contract subjects that were deployed with the aci_contract_subject module
-
+- Tenant must exist prior to using this module
 
 ---
 
@@ -293,31 +311,118 @@ Manage tenants in an ACI fabric
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
-| name  |   yes  |  | <ul></ul> |  Name of tenant  |
-| descr  |   no  |  | <ul></ul> |  description of tenant  |
-| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the tenant  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
-
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| tenant_name  |   yes  |  | <ul></ul> |  Name of tenant  |
+| descr  |   no  |  | <ul></ul> |  description of tenant  |
 
  
 #### Examples
 
 ```
-# ensure tenant exists
-- aci_tenant: name=ACILab descr='tenant by Ansible' host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# ensure tenant does not exist on system
-- aci_tenant: name=ACILab state=absent host={{ inventory_hostname }} username={{ user }} password={{ pass }}
+ aci_tenant:
+       action: "{{ action }}"
+       tenant_name: "{{ tenant_name }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 
 ```
 
+---
 
+## aci_anp
+Manage application network profile in an ACI fabric
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+ Offers ability to manage Application Network profiles 
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
+| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| tenant_name  |   yes  |  | <ul></ul> |  Name of tenant the Application profile will be a part of |
+| app_profile_name | yes | | <ul></ul> | Name of the Application profile |
+| descr  |   no  |  | <ul></ul> |  description of applciation profile  |
+
+ 
+#### Examples
+
+```
+  aci_anp:
+       action: "{{ action }}"
+       app_profile_name: "{{ app_profile_name }}"
+       tenant_name: "{{ tenant_name }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
+
+```
+#### Notes
+
+- Tenant must exist prior to using this module
 
 ---
 
+## aci_epg
+Manage end point groups in an ACI fabric
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+ Offers ability to manage end point groups
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
+| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| tenant_name  |   yes  |  | <ul></ul> |  Name of tenant the Application profile will be a part of |
+| app_profile_name | yes | | <ul></ul> | Name of the Application profile |
+| descr  |   no  |  | <ul></ul> |  description of applciation profile  |
+
+ 
+#### Examples
+
+```
+  aci_anp:
+       action: "{{ action }}"
+       app_profile_name: "{{ app_profile_name }}"
+       tenant_name: "{{ tenant_name }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
+
+```
+#### Notes
+
+- Tenant must exist prior to using this module
+
+---
 
 ## aci_rest
 Direct access to the APIC API
