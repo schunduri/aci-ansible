@@ -13,9 +13,13 @@ requirements:
 notes:
     - Tenant should already exist
 options:
-	action:
-		description:
-			- post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     tenant_name:
         description:
             - Tenant Name
@@ -117,6 +121,7 @@ EXAMPLES =  '''
         host: "{{ inventory_hostname }}"
         username: "{{ username }}" 
         password: "{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
