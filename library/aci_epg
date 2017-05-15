@@ -13,9 +13,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     tenant_name:
         description:
             - Tenant Name
@@ -37,6 +41,13 @@ options:
         default: null
         choices: []
         aliases: []
+   bd_name:
+        description:
+            - Name of the Bridge Domain being associated to the EPG
+        required: true
+        default: null
+        choices: []
+        aliases: []     
    priority:
         description:
             - Qos class 
@@ -58,6 +69,41 @@ options:
         default: null
         choices: []
         aliases: []
+    contract_type:
+        description:
+            - Type of Contract being associated with the EPG[provider, consumer or both]
+        required: false
+        default: null
+        choices: ['provider','consumer', 'both']
+        aliases: []
+    contract_name_provider:
+        description:
+            - Name of the provider contract
+        required: false
+        default: null
+        choices: []
+        aliases: []
+    contract_name_consumer:
+        description:
+            - Name of the consumer contract
+        required: false
+        default: null
+        choices: []
+        aliases: [] 
+    priority_provider:
+        description:
+            - Qos value for the provider contract
+        required: false
+        default: 'unspecified'
+        choices: ['level1','level2', 'level3', 'unspecified']
+        aliases: []
+    priority_consumer:
+        description:
+            - Qos value for the consumer contract
+        required: false
+        default: 'unspecified'
+        choices: ['level1','level2', 'level3', 'unspecified']
+        aliases: []    
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
@@ -95,13 +141,20 @@ EXAMPLES = '''
        epg_name: ""{{ epg_name }}"
        app_profile_name: "{{ app_profile_name }}"
        tenant_name: "{{ tenant_name }}"
+       bd_name: "{{ bd_name }}"
        priority: "{{ priority }}"
+       contract_type: "{{ contract_type }}"
+       contract_name_provider: "{{ contract_name_provider }}"
+       contract_name_consumer: "{{ contract_name_consumer }}"
+       priority_provider: "{{ priority_provider }}"
+       priority_consumer: "{{ priority_consumer }}"
        intra_epg_isolation: "{{ intra_epg_isolation }}"
        bd_name: "{{ bd_name }}"
        descr: "{{ descr }}"
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 
@@ -119,22 +172,18 @@ def main():
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='http'),
+            protocol=dict(choices=['http', 'https'], default='https'),
             epg_name=dict(type="str"),
             contract_name_provider=dict(type="str"),
             contract_name_consumer = dict(type="str"),
-            provider_consumer=dict(choices=['provider','consumer','both'], required=False),
+            contract_type=dict(choices=['provider','consumer','both'], required=False),
             priority_provider = dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
             priority_consumer = dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
             bd_name=dict(type="str"),
             app_profile_name=dict(type="str"),
             tenant_name=dict(type="str"),
             descr=dict(type="str", required=False),
-<<<<<<< HEAD
             priority=dict(choices=['level1','level2','level3','unspecified'], required=False, default='unspecified'),
-=======
-            priority=dict(type="str", required=False, default='unspecified'),
->>>>>>> f58ad9ffb5cfbfabf7b6cc66893666c06ddf1602
             intra_epg_isolation=dict(choices=['enforced','unenforced'], default='unenforced'),
         ),
         supports_check_mode=False
@@ -145,21 +194,15 @@ def main():
     tenant_name=module.params['tenant_name']
     bd_name = module.params['bd_name']
     descr=module.params['descr']
-<<<<<<< HEAD
     descr=str(descr)
     contract_name_provider = module.params['contract_name_provider']
     contract_name_consumer = module.params['contract_name_consumer']
-    provider_consumer = module.params['provider_consumer']
+    contract_type = module.params['provider_consumer']
     priority_provider = module.params['priority_provider']
     priority_consumer = module.params['priority_consumer']
     priority = module.params['priority']
-=======
     descr = str(descr)
-    priority=module.params['priority']
-    priority = str(priority)
->>>>>>> f58ad9ffb5cfbfabf7b6cc66893666c06ddf1602
     intra_epg_isolation=module.params['intra_epg_isolation']
-    intra_epg_isolation = str(intra_epg_isolation)
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
@@ -167,7 +210,7 @@ def main():
     action = module.params['action']
     
     ''' Config payload to enable the physical interface '''
-    if provider_consumer == "provider":
+    if contract_type == "provider":
        config_data = {
         "fvAEPg":{
           "attributes":{
@@ -195,7 +238,7 @@ def main():
            ]
        }
     }
-    elif provider_consumer == "consumer":
+    elif contract_type == "consumer":
         config_data = {
             "fvAEPg": {
                 "attributes": {
@@ -223,7 +266,7 @@ def main():
                 ]
             }
         }
-    elif provider_consumer == "both":
+    elif contract_type == "both":
        config_data = {
             "fvAEPg": {
                 "attributes": {
@@ -330,9 +373,9 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-
-if __name__ == '__main__':
+try:
     main()
-'''Code End'''
+except:
+    pass
 
 
