@@ -149,6 +149,8 @@ def main():
     domain_profile = module.params['domain_profile']
     encap = module.params['encap']
     immediacy = module.params['immediacy']
+    if immediacy == 'on-demand':
+	immediacy = 'lazy'
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
