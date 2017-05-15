@@ -38,8 +38,8 @@ Offers ability to manage private networks. Each context is a private network ass
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
 | password  |   yes  |  null  | <ul></ul> |  Password used to login to the switch  |
-| host  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
-| protocol  |   yes  |  | <ul></ul> |  Dictates connection protocol |
+| host  |   no  |  https  | <ul>  </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
+| protocol  |   yes  |  | <ul><li>http</li>  <li>https</li></ul> |  Dictates connection protocol |
 | action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
 | tenant_name  |   yes  |  unspecified  | <ul></ul> |  Name of the Tenant  |
 | vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
@@ -144,8 +144,8 @@ Manages filter entries that will be assigned to an already created filter
 | filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part  |
 | entry_name | yes | | <ul></ul> | name of the entry |
-| ether_type | no | unspecified | <ul> <li>ARP</li> <li>FCOE </li> <li>IP</li> <li>MAC Security</li> <li>MPLS Unicast</li> Trill
-<li>Unspecified</li> </ul> | the EtherType of the filter entry |
+| ether_type | no | unspecified | <ul> <li>ARP</li> <li>FCOE </li> <li>IP</li> <li>MAC Security</li> <li>MPLS Unicast</li> <li>Trill</li>
+<li>Unspecified</li> </ul> | EtherType of the filter entry |
 | icmp_msg_type | no | unspecified | <ul> <li>echo</li> <li>echo-rep</li> <li>dst-unreach</li> <li>unspecified</li> </ul> | ICMP Message Type |
 | descr  |   no  |  null  | <ul> </ul> |   description of filter  |
 
