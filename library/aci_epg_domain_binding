@@ -133,7 +133,7 @@ def main():
 	    domain=dict(choices=['phys'], default='phys'),
 	    domain_profile=dict(type='str', required=True),
             encap=dict(type='str', required=True),
-            immediacy=dict(choices=['immediate','ondemand'], default='immediate'),
+            immediacy=dict(choices=['immediate','on-demand'], default='immediate'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
