@@ -9,78 +9,66 @@
 ---
 ### Modules
 
-  * [aci_filter_entry - manages filter entries that will be assigned to a filter](#aci_filter_entry)
+  * [aci_context - manage private networks, contexts, in an aci fabric](#aci_context)
   * [aci_filter - manages top level filter objects](#aci_filter)
+  * [aci_filter_entry - manages filter entries that will be assigned to a filter](#aci_filter_entry)
   * [aci_bridge_domain - manages bridge domains in an aci fabric](#aci_bridge_domain)
   * [aci_contract - manages initial contracts (does not include contract subjs)](#aci_contract)
   * [aci_tenant - manage tenants in an aci fabric](#aci_tenant)
   * [aci_rest - direct access to the apic api](#aci_rest)
   * [aci_epg - manages aci end point groups and related contracts](#aci_epg)
   * [aci_contract_subject - manages contract subjects](#aci_contract_subject)
-  * [aci_context - manage private networks, contexts, in an aci fabric](#aci_context)
   * [aci_anp - manage top level application network profile objects](#aci_anp)
 
 ---
 
-## aci_filter_entry
-Manages filter entries that will be assigned to a filter
+## aci_context
+Manage private networks, contexts, in an aci fabric
 
   * Synopsis
   * Options
   * Examples
 
 #### Synopsis
- Manages filter entries that will be assigned to an already created filter
+Offers ability to manage private networks. Each context is a private network associated to a tenant, i.e. VRF
 
 #### Options
 
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
-| dest_from_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
-| name  |   yes  |  | <ul></ul> |  Name of the entry  |
-| dest_to_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| proto  |   no  |  | <ul> <li>eigrp</li>  <li>egp</li>  <li>icmp</li>  <li>igmp</li>  <li>igp</li>  <li>l2tp</li>  <li>ospfigp</li>  <li>pim</li>  <li>tcp</li>  <li>udp</li> </ul> |  Protocol to be matched against for this entry  |
-| allow_fragment  |   no  |  | <ul> <li>yes</li>  <li>no</li> </ul> |  Matches allow_fragment option from APIC  |
-| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| filter  |   yes  |  | <ul></ul> |  Name of the filter this entry will be part of  |
-| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the entry  |
-| src_to_port  |   no  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
-| src_from_port  |   yes  |  unspecified  | <ul></ul> |  supports keywords as APIC does, i.e. unspecified, https, http  |
-| tenant  |   yes  |  | <ul></ul> |  Name of the tenant this entry will be part of  |
-| tcp_session_rules  |   no  |  | <ul> <li>ack</li>  <li>syn</li>  <li>est</li>  <li>rst</li>  <li>fin</li> </ul> |  Acknowledgment, Synchronize, Established, Reset, Finish  |
-
+| password  |   yes  |  null  | <ul></ul> |  Password used to login to the switch  |
+| host  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
+| protocol  |   yes  |  | <ul></ul> |  Dictates connection protocol |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| tenant_name  |   yes  |  unspecified  | <ul></ul> |  Name of the Tenant  |
+| vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
+| policy_control_direction  |   no  | ingress | <ul> <li>ingress</li>  <li>egress</li> </ul> |  The preferred policy control in relation to where the policy will be applied  |
+| policy_control_preference  |   no  | enforced  | <ul><li>enforced</li> <li>unenforced</li></ul> |    |
+| descr  |   no  | null | <ul></ul> | Description for the filter entry  |
 
  
 #### Examples
 
 ```
-
-# entry for web filter
-- aci_filter_entry: name=web_filter proto=tcp tenant=ACILab filter=Web_Filter dest_to_port=80 state=present host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
-# entry showing varying src/dest ports
-- aci_filter_entry: name=entry2 proto=tcp tenant=ACILab filter=Web_Filter src_to_port=unspecified dest_from_port=500 dest_to_port=1000 tcp_session_rules=rst host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-
+-aci_context:
+       action: "{{ action }}"
+       vrf_name: "{{ vrf_name }}"
+       tenant_name: "{{ tenant_name }}"
+       policy_control_direction: "{{  policy_control_direction }}"
+       policy_control_preference: "{{ policy_control_preference }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 ```
 
 
 #### Notes
 
-- If only a single source port is required (not to and from), either the src_to_port or src_from_port could be used.
-
-- If only a single dest port is required (not to and from), either the dest_to_port or dest_from_port could be used.
-
-- When neither *_to_port or *_from_port is not used, it becomes unspecified (as in ACI fabric)
-
-- If ACI supports named protocols, the module is not idempotent, with the exception of http/https.
-
-- Only a single tcp session rule is supported per entry
-
-- If proto does not equal tcp/udp, the src/dest and tcp_session params are not used, even if set.
+- Tenant must be exist prior to using this module
 
 
 ---
@@ -101,13 +89,14 @@ Manages top level filter objects
 | Parameter     | required    | default  | choices    | comments |
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| name  |   yes  |  | <ul></ul> |  Name of the filter  |
-| descr  |   no  |  | <ul></ul> |  description of filter  |
-| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| state  |   no  |  present  | <ul> <li>present</li>  <li>absent</li> </ul> |  Desired state of the filter  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
-| tenant  |   yes  |  | <ul></ul> |  name of tenant this filter will be part of  |
+| host | yes | |<ul></ul> | IP Address or hostname of APIC resolvable by Ansible control host |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of |
+| entry_name | yes | | <ul></ul> | name of the filter entry  |
+| tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part of |
+| descr  |   no  |  null  | <ul> </ul> |   description of filter entry  |
 
 
  
@@ -115,21 +104,74 @@ Manages top level filter objects
 
 ```
 
-# name: ensure filters exist
-aci_filter: name={{ item }} tenant=ACILab host={{ inventory_hostname }} username={{ user }} password={{ pass }}
-with_items:
-  - Web_Filter
-  - App_Filter
-  - DB_Filter
-
+ aci_filter:
+       action: "{{ action }}"
+       filter_name: "{{ filter_name }}"
+       tenant_name: "{{ tenant_name }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 
 ```
+#### Notes
 
-
+- Tenant must be exist prior to using this module
 
 ---
 
+## aci_filter_entry
+Manages filter entries that will be assigned to a filter
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+Manages filter entries that will be assigned to an already created filter
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| host | yes | |<ul></ul> | IP Address or hostname of APIC resolvable by Ansible control host |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of  |
+| tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part  |
+| entry_name | yes | | <ul></ul> | name of the entry |
+| ether_type | no | unspecified | <ul> <li>ARP</li> <li>FCOE </li> <li>IP</li> <li>MAC Security</li> <li>MPLS Unicast</li> Trill
+<li>Unspecified</li> </ul> | the EtherType of the filter entry |
+| icmp_msg_type | no | unspecified | <ul> <li>echo</li> <li>echo-rep</li> <li>dst-unreach</li> <li>unspecified</li> </ul> | ICMP Message Type |
+| descr  |   no  |  null  | <ul> </ul> |   description of filter  |
+
+ 
+#### Examples
+
+```
+  aci_filter_entry:
+       action: "{{ action }}"
+       filter_name; "{{ filter_name }}"
+       entry_name: "{{ entry_name }}"
+       tenant_name: "{{ tenant_name }}"
+       ether_name: "{{  ether_name }}"
+       icmp_msg_type: "{{ icmp_msg_type }}"
+       descr: "{{ descr }}"
+       host: "{{ inventory_hostname }}"
+       username: "{{ user }}"
+       password: "{{ pass }}"
+       protocol: "{{ protocol }}"
+
+```
+#### Notes
+
+- Tenant and Filter must exist prior to using this module
+
+---
 
 ## aci_bridge_domain
 Manages bridge domains in an ACI fabric
