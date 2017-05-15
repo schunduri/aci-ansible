@@ -12,9 +12,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes:
 options:
-	action:
-		description:
-			- post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     mcp_interface:
         description:
             - MCP Interface name
@@ -76,6 +80,7 @@ EXAMPLES =  '''
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
+	protocol:"{{ protocol }}"
 
 '''
 
@@ -90,9 +95,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=False),
+            action=dict(choices=['get', 'post']),
             mcp_interface=dict(type='str'),
-            admin_state=dict(choices=['enabled','disabled'], default='enable'),
+            admin_state=dict(choices=['enabled','disabled'], default='enabled'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
