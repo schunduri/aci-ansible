@@ -57,8 +57,8 @@ Offers ability to manage private networks. Each context is a private network ass
 | ------------- |-------------| ---------|----------- |--------- |
 | username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
-| host  |   no  |  https  | <ul>  </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
-| protocol  |   yes  |  | <ul><li>http</li>  <li>https</li></ul> |  Dictates connection protocol |
+| host  |   no  |    | <ul>  </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
+| protocol  |   yes  | https | <ul><li>http</li>  <li>https</li></ul> |  Dictates connection protocol |
 | action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
 | tenant_name  |   yes  |  unspecified  | <ul></ul> |  Name of the Tenant  |
 | vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
