@@ -11,9 +11,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     tenant_name:
         description:
             - Tenant Name
@@ -75,6 +79,7 @@ EXAMPLES = '''
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 
@@ -92,7 +97,7 @@ def main():
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='http'),
+            protocol=dict(choices=['http', 'https'], default='https'),
             filter_name=dict(type="str", required=False),
             tenant_name=dict(type="str", required=False),
             descr=dict(type="sitr", required=False),
@@ -163,7 +168,7 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-
-if __name__ == '__main__':
+try:
     main()
-'''Code End'''
+expect:
+    pass
