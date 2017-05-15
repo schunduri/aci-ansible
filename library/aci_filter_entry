@@ -11,10 +11,14 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
-    tenant_name:
+   action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
+   tenant_name:
         description:
             - Tenant Name
         required: true
@@ -28,7 +32,7 @@ options:
         default: null
         choices: []
         aliases: []
-  ether_type:
+   ether_type:
         description:
             - Ether Type 
         required:false
@@ -42,7 +46,7 @@ options:
         default: unspecified
         choices: ['echo','echo-rep','dst-unreach','unspecified']
         aliases: []
-     descr:
+    descr:
         description:
             - Description for the AEP
         required: false
@@ -92,6 +96,7 @@ EXAMPLES = '''
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 
@@ -107,13 +112,13 @@ def main():
             action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
+            password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-            entry_name=dict(type="str", required=False),
-            ether_type=dict(type="str", required=False),
-            filter_name=dict(type="str"),
+            entry_name=dict(type="str", required=True),
+            ether_type=dict(type="str", required=False, default='unspecified'),
+            filter_name=dict(type="str", required=True),
             icmp_msg_type=dict(choices=['echo','echo-rep','dst-unreach','unspecified'], default='unspecified'),
-            tenant_name=dict(type="str", required=False),
+            tenant_name=dict(type="str", required=True),
             descr=dict(type="str", required=False),
         ),
         supports_check_mode=False
@@ -193,7 +198,7 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-
-if __name__ == '__main__':
+try:
     main()
-'''Code End'''
+except:
+    pass
