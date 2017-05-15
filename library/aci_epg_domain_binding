@@ -28,7 +28,7 @@ options:
         default: null
         choices: []
         aliases: []
-    application_profile:
+    app_profile_name:
         description:
             - Application Profile Name
         required: true
@@ -105,7 +105,7 @@ EXAMPLES = '''
     aci_epg_domain_binding: 
         action: "{{ action }}"
 	tenant_name: "{{ tenant_name }}"
-	application_profile: "{{ application_profile }}"
+	app_profile_name: "{{ app_profile_name }}"
 	epg_name: "{{ epg_name }}"
 	encap: "{{ encap }}"
 	domain: "{{ domain }}"
@@ -128,7 +128,7 @@ def main():
         argument_spec=dict(
             action=dict(choices=['post', 'get']),
             tenant_name=dict(type='str', required=True),
-            application_profile=dict(type='str', required=True),
+            app_profile_name =dict(type='str', required=True),
             epg_name=dict(type='str', required=True),
 	    domain=dict(choices=['phys'], default='phys'),
 	    domain_profile=dict(type='str', required=True),
@@ -143,7 +143,7 @@ def main():
     )
 
     tenant_name = module.params['tenant_name']
-    application_profile = module.params['application_profile']
+    app_profile_name  = module.params['app_profile_name ']
     epg_name = module.params['epg_name']
     domain = module.params['domain']
     domain_profile = module.params['domain_profile']
@@ -156,14 +156,14 @@ def main():
 
     action = module.params['action']
 
-    post_uri = '/api/mo/uni/tn-'+tenant_name+'/ap-'+application_profile+'/epg-'+epg_name+'/rsdomAtt-[uni/'+domain+'-'+domain_profile+ '].json'
+    post_uri = '/api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name +'/epg-'+epg_name+'/rsdomAtt-[uni/'+domain+'-'+domain_profile+ '].json'
     get_uri = '/api/node/class/fvRsDomAtt.json'
 
     ''' Config payload to enable the physical interface '''
     config_data = {
 	"fvRsDomAtt": {
 		"attributes": {
-			"dn": "uni/tn-"+tenant_name+"/ap-"+application_profile+"/epg-"+epg_name+"/rsdomAtt-[uni/"+domain+"-" + domain_profile+"]",
+			"dn": "uni/tn-"+tenant_name+"/ap-"+app_profile_name +"/epg-"+epg_name+"/rsdomAtt-[uni/"+domain+"-" + domain_profile+"]",
 			"encap": "vlan-"+encap+"",
 			"instrImedcy": ""+immediacy+"",
 		}
