@@ -12,9 +12,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes:
 options:
-	action:
-		description:
-			- post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     fc_policy:
         description:
             - Fiber Channel Interface Policy name
@@ -90,7 +94,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=True),
+            action=dict(choices=['get', 'post']),
             descr=dict(type='str',required=False),       
             fc_policy=dict(type='str', required=True),
             port_mode=dict(choices=['f','np'], default='f', required=False),
