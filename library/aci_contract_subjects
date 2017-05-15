@@ -10,10 +10,14 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-        action:
-                description:
-                        - post or get
-    tenant_name:
+   action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []    
+   tenant_name:
         description:
             - Tenant Name
         required: true
@@ -27,7 +31,14 @@ options:
         default: null
         choices: []
         aliases: []
-  reverse_filter:
+   contract_name:
+        description:
+            - Contract Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+   reverse_filter:
         description:
             - Select or De-select reverse filter port option
         required: false
@@ -41,21 +52,21 @@ options:
         default: unspecified
         choices: [ 'unspecified','level1','level2','level3']
         aliases: []
-  target:
+   target:
         description:
             - Target DSCP
         required:false
         default: unspecified
         choices: []
         aliases: []
-  filter_name:
+   filter_name:
         description:
             - Filter Name
         required:false
         default: null
         choices: []
         aliases: []
-  directive:
+   directive:
         description:
             - Directive for filter  (can be none or log)
         required:false
@@ -104,6 +115,7 @@ EXAMPLES = '''
     aci_contract_subjects:
        action: "{{ action }}"
        subject_name: "{{ subject_name }}"
+       contract_name: "{{ contract_name }}"
        tenant_name: "{{ tenant_name }}"
        priority: "{{ priority }}"
        reverse_filter: "{{ reverse_filter }}"
@@ -128,7 +140,7 @@ def main():
             action=dict(choices=['post', 'get']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
-            password=dict(type='str', default='Cisco!123'),
+            password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
             contract_name=dict(type="str"),
             subject_name=dict(type="str", required=False),
@@ -149,6 +161,7 @@ def main():
     reverse_filter=module.params['reverse_filter']
     target=module.params['target']
     descr=module.params['descr']
+    descr=str(descr)
     contract_name= module.params['contract_name']
     username = module.params['username']
     password = module.params['password']
@@ -239,7 +252,8 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-
-if __name__ == '__main__':
+try:
     main()
-'''Code End'''
+except: 
+    pass
+
