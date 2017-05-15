@@ -13,9 +13,13 @@ requirements:
 notes:
     - Tenant should already exist
 options:
-	action:
-		description:
-			- post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     tenant_name:
         description:
             - Tenant Name
@@ -93,6 +97,7 @@ EXAMPLES =  '''
 	host:"{{ inventory_hostname }}" 
 	username:"{{ username }}" 
 	password:"{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
@@ -107,7 +112,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=False),
+            action=dict(choices=['get', 'post']),
             src_group=dict(type='str'),
             dst_group=dict(type='str'),
             admin_state=dict(choices=['enabled','disabled'], default='enabled'),
