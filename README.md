@@ -566,7 +566,7 @@ Manage end point retention policy
         host: "{{ inventory_hostname }}"
         username: "{{ username }}" 
         password: "{{ password }}"
-	       protocol: "{{ protocol }}"
+        protocol: "{{ protocol }}"
 
 ```
 #### Notes
@@ -648,7 +648,7 @@ Manage L2 Interface Policy in an ACI fabric
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-	       protocol: "{{ protocol }}"
+	protocol: "{{ protocol }}"
 
 ```
 ---
@@ -725,7 +725,7 @@ Manage Login Domain for an ACI fabric
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-	       protocol: "{{ protocol }}"
+        protocol: "{{ protocol }}"
 
 ```
 ---
@@ -759,7 +759,7 @@ Manage monitoring policy in an ACI fabric
   aci_monitoring_policy:
         action: "{{ action }}"
         tenant_name: "{{ tenant_name }}"
-	       monitoring_policy: "{{ monitoring_policy }}"
+	monitoring_policy: "{{ monitoring_policy }}"
         descr: "{{ descr }}"
         host= "{{ inventory_hostname }}"
         username: "{{ username }}"
@@ -807,7 +807,7 @@ Manage MCP Interface policy in an ACI fabric
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-	       protocol:"{{ protocol }}"
+	protocol:"{{ protocol }}"
 
 ```
 
@@ -851,7 +851,7 @@ Manage Port Channel Interface in an ACI fabric
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
-	       protocol: "{{ protocol }}"
+	protocol: "{{ protocol }}"
 
 
 ```
@@ -891,7 +891,7 @@ Manage Port Security in an ACI fabric
         host: "{{ inventory_hostname }}"
         username: "{{ username }}" 
         password: "{{ password }}"
-	       protocol: "{{ protocol }}"
+	protocol: "{{ protocol }}"
 
 
 ```
@@ -928,11 +928,11 @@ Manage Route Tag Policy in an ACI fabric
          tenant_name: "{{ tenant_name }}"
          rtp_name: "{{ rtp_name }}" 
          tag: "{{ tag }}"
-	        descr: "{{ descr }}" 
-	        host: "{{ inventory_hostname }}" 
-	        username: "{{ username }}"
-	        password: "{{ password }}"
-	        protocol: "{{ protocol }}"
+	 descr: "{{ descr }}" 
+	 host: "{{ inventory_hostname }}" 
+	 username: "{{ username }}"
+	 password: "{{ password }}"
+	 protocol: "{{ protocol }}"
 
 ```
 #### NOTES
@@ -969,11 +969,11 @@ Manage SPAN Destination Group in an ACI fabric
         action:"{{ action }}" 
         tenant_name:"{{ tenant_name }}" 
        	dst_group:"{{ dst_group }}" 
- 	      descr:"{{ descr }}" 
-	       host:"{{ inventory_hostname }}" 
-	       username:"{{ username }}"
+ 	descr:"{{ descr }}" 
+	host:"{{ inventory_hostname }}" 
+	username:"{{ username }}"
        	password:"{{ password }}"
-	       protocol: "{{ protocol }}"
+	protocol: "{{ protocol }}"
 
 ```
 #### NOTES
@@ -1009,15 +1009,15 @@ Manage SPAN Source Group in an ACI fabric
 
 ```
   aci_span_src_group: 
-	     action:"{{ action }}" 	
-	     tenant_name:"{{ tenant_name }}" 
+	action:"{{ action }}" 	
+	tenant_name:"{{ tenant_name }}" 
      	src_group:"{{ src_group }}" 
-	     dst_group:"{{ dst_group }}" 
-	     admin_state:"{{ admin_state }}" 
-	     descr:"{{ descr }}" 
-	     host:"{{ inventory_hostname }}" 
-	     username:"{{ username }}" 
-	     password:"{{ password }}"
+	dst_group:"{{ dst_group }}" 
+	admin_state:"{{ admin_state }}" 
+	descr:"{{ descr }}" 
+	host:"{{ inventory_hostname }}" 
+	username:"{{ username }}" 
+	password:"{{ password }}"
      	protocol: "{{ protocol }}"
 
 ```
@@ -1053,12 +1053,12 @@ Manage Taboo Contracts in an ACI fabric
 ```
   aci_taboo_contracts: 
      	action:"{{ action }}" 
-	     tenant_name:"{{ tenant_name }}" 
-	     taboo_contract:"{{ taboo_contract }}" 
+        tenant_name:"{{ tenant_name }}" 
+	taboo_contract:"{{ taboo_contract }}" 
      	descr:"{{ descr }}" 
      	host:"{{ inventory_hostname }}" 
      	username:"{{ username }}" 
-	     password:"{{ password }}"
+	password:"{{ password }}"
      	protocol: "{{ protocol }}"
 
 ```
@@ -1099,7 +1099,7 @@ Manage Action Rule Profile in an ACI fabric
          host: "{{ inventory_hostname }}"
          username: "{{ username }}" 
          password: "{{ password }}"
-	        protocol: "{{ protocol }}"
+	 protocol: "{{ protocol }}"
 
 ```
 #### NOTES
@@ -1172,17 +1172,17 @@ Manage Physical domain binding to EPGs in an ACI fabric
 ```
     aci_epg_domain_binding: 
         action: "{{ action }}"
-	       tenant_name: "{{ tenant_name }}"
-	       app_profile_name: "{{ app_profile_name }}"
+	tenant_name: "{{ tenant_name }}"
+	app_profile_name: "{{ app_profile_name }}"
        	epg_name: "{{ epg_name }}"
        	encap: 1
        	domain: "{{ domain }}"
        	domain_profile: "{{ domain_profile }}"
        	immediacy: "{{ immediacy }}" 
        	host: "{{ inventory_hostname }}"
-	       username: "{{ user }}"
+	username: "{{ user }}"
        	password: "{{ pass }}"
-	       protocol: "{{ protocol }}"
+	protocol: "{{ protocol }}"
 
 ```
 #### NOTES
@@ -1227,12 +1227,12 @@ Manage Physical domain binding to EPGs in an ACI fabric
            epg_name: "{{ epg_name }}"
            domain_profile: "{{ domain_profile }}"
            deploy_immediacy: "{{ deploy_immediacy }}"
-	          resolution_immediacy: "{{ resolution_immediacy }}"
-	          netflow: "{{ netflow }}"
+	   resolution_immediacy: "{{ resolution_immediacy }}"
+	   netflow: "{{ netflow }}"
            host: "{{ inventory_hostname }}"
            username: "{{ user }}"
            password: "{{ pass }}"
-	          protocol: "{{ protocol }}"
+	   protocol: "{{ protocol }}"
 
 ```
 #### NOTES
