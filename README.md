@@ -1261,7 +1261,7 @@ Direct access to the APIC API
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | action  |   yes  |  | <ul> <li>post</li>  <li>get</li> </ul> |  http verb, i.e. post or get  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| password  |   yes  |  C1sco12345  | <ul></ul> |  Password used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 
 
  
