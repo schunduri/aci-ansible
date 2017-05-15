@@ -144,8 +144,7 @@ Manages filter entries that will be assigned to an already created filter
 | filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part  |
 | entry_name | yes | | <ul></ul> | name of the entry |
-| ether_type | no | unspecified | <ul> <li>ARP</li> <li>FCOE </li> <li>IP</li> <li>MAC Security</li> <li>MPLS Unicast</li> <li>Trill</li>
-<li>Unspecified</li> </ul> | EtherType of the filter entry |
+| ether_type | no | unspecified | <ul><li>ARP</li><li>FCOE</li><li>IP</li><li>MAC Security</li><li>MPLS Unicast</li><li>Trill</li><li>Unspecified</li> </ul> | EtherType of the filter entry |
 | icmp_msg_type | no | unspecified | <ul> <li>echo</li> <li>echo-rep</li> <li>dst-unreach</li> <li>unspecified</li> </ul> | ICMP Message Type |
 | descr  |   no  |  null  | <ul> </ul> |   description of filter  |
 
