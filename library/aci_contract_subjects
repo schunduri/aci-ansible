@@ -126,6 +126,7 @@ EXAMPLES = '''
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
        password: "{{ pass }}"
+       protocol: "{{ protocol }}"
 
 '''
 import socket
