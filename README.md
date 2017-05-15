@@ -44,7 +44,7 @@ Offers ability to manage private networks. Each context is a private network ass
 | tenant_name  |   yes  |  unspecified  | <ul></ul> |  Name of the Tenant  |
 | vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
 | policy_control_direction  |   no  | ingress | <ul> <li>ingress</li>  <li>egress</li> </ul> |  The preferred policy control in relation to where the policy will be applied  |
-| policy_control_preference  |   no  | enforced  | <ul><li>enforced</li> <li>unenforced</li></ul> |    |
+| policy_control_preference  |   no  | enforced  | <ul><li>enforced</li> <li>unenforced</li></ul> |  The preferred policy control  |
 | descr  |   no  | null | <ul></ul> | Description for the filter entry  |
 
  
