@@ -14,6 +14,10 @@ options:
     action:
         description:
             - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     tenant_name:
         description:
             - Tenant Name
@@ -127,7 +131,7 @@ def main():
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='http')
+            protocol=dict(choices=['http', 'https'], default='https')
         ),
         supports_check_mode=False
     )
