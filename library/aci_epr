@@ -38,35 +38,35 @@ options:
         description:
             - Bounce Entry Aging Interval (range 150secs - 65535secs)
         required: true
-        default: null
+        default: 630
         choices: []
         aliases: []
     hold_interval:
         description:
             - Hold Interval (range 5secs - 65535secs)
         required: true
-        default: null
+        default: 300
         choices: []
         aliases: []
     local_ep_interval:
         description:
             - Local end point Aging Interval (range 120secs - 65535secs)
         required: true
-        default: null
+        default: 900
         choices: []
         aliases: []
     remote_ep_interval:
         description:
             - Remote end point Aging Interval (range 120secs - 65535secs)
         required: true
-        default: null
+        default: 300
         choices: []
         aliases: []
      move_frequency:
         description:
             - Move frequency per second (range 0secs - 65535secs)
         required: true
-        default: null
+        default: 256
         choices: []
         aliases: []
     descr:
@@ -139,12 +139,12 @@ def main():
             action=dict(choices=['get', 'post'], required=False),
             tenant_name=dict(type='str', required = True),
             epr_name=dict(type='str', required = True),
-            bounce_age=dict(type='int'),
-            hold_interval=dict(type='int'),
-            local_ep_interval=dict(type='int'),
-            remote_ep_interval=dict(type='int'),
+            bounce_age=dict(type='int', default = '630'),
+            hold_interval=dict(type='int', default = '300'),
+            local_ep_interval=dict(type='int', default = '900'),
+            remote_ep_interval=dict(type='int', default = '300'),
             descr=dict(type='str'),
-            move_frequency=dict(type='int'),
+            move_frequency=dict(type='int', default = '256'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
