@@ -12,9 +12,13 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes:
 options:
-	action:
-		description:
-			- post or get
+    action:
+        description:
+            - post or get
+        required: true
+        default: null
+        choices: ['post','get']
+        aliases: []
     login_domain:
         description:
             - Domain name
@@ -68,6 +72,7 @@ EXAMPLES =  '''
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
         password: "{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
