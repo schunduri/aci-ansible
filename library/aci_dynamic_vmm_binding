@@ -126,7 +126,7 @@ def main():
             epg_name=dict(type='str', required=True),
 	    domain_profile=dict(type='str', required=True),
             deploy_immediacy=dict(choices=['immediate', 'on-demand'], default='on-demand'),
-            resolution_immediacy=dict(choices=['immediate','ondemand', 'pre-provision'], default='immediate'),
+            resolution_immediacy=dict(choices=['immediate','on-demand', 'pre-provision'], default='immediate'),
             netflow=dict(choices=['enabled','disabled'], default='disabled'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -162,10 +162,9 @@ def main():
     config_data = {
 	"fvRsDomAtt": {
 		"attributes": {
-			
 			"instrImedcy": deploy_immediacy,
-            "resImedcy": resolution_immediacy,
-            "netflowPref": netflow
+                        "resImedcy": resolution_immediacy,
+                        "netflowPref": netflow
 			
 		}
 	}
