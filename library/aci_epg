@@ -149,7 +149,6 @@ EXAMPLES = '''
        priority_provider: "{{ priority_provider }}"
        priority_consumer: "{{ priority_consumer }}"
        intra_epg_isolation: "{{ intra_epg_isolation }}"
-       bd_name: "{{ bd_name }}"
        descr: "{{ descr }}"
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
