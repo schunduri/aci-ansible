@@ -64,7 +64,7 @@ Offers ability to manage private networks. Each context is a private network ass
 | vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
 | policy_control_direction  |   no  | ingress | <ul> <li>ingress</li>  <li>egress</li> </ul> |  The preferred policy control in relation to where the policy will be applied  |
 | policy_control_preference  |   no  | enforced  | <ul><li>enforced</li> <li>unenforced</li></ul> |  The preferred policy control  |
-| descr  |   no  | null | <ul></ul> | Description for the filter entry  |
+| descr  |   no  |  | <ul></ul> | Description for the filter entry  |
 
  
 #### Examples
@@ -115,7 +115,7 @@ Manages top level filter objects
 | filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of |
 | entry_name | yes | | <ul></ul> | name of the filter entry  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part of |
-| descr  |   no  |  null  | <ul> </ul> |   description of filter entry  |
+| descr  |   no  |    | <ul> </ul> |   description of filter entry  |
 
 
  
@@ -165,7 +165,7 @@ Manages filter entries that will be assigned to an already created filter
 | entry_name | yes | | <ul></ul> | name of the entry |
 | ether_type | no | unspecified | <ul><li>ARP</li><li>FCOE</li><li>IP</li><li>MAC Security</li><li>MPLS Unicast</li><li>Trill</li><li>Unspecified</li> </ul> | EtherType of the filter entry |
 | icmp_msg_type | no | unspecified | <ul> <li>echo</li> <li>echo-rep</li> <li>dst-unreach</li> <li>unspecified</li> </ul> | ICMP Message Type |
-| descr  |   no  |  null  | <ul> </ul> |   description of filter  |
+| descr  |   no  |    | <ul> </ul> |   description of filter  |
 
  
 #### Examples
