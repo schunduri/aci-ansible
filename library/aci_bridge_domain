@@ -48,13 +48,6 @@ options:
         default: null
         choices: []
         aliases: []
-    l3_out:
-        description:
-            - Name of the External routed network (L3Out) to associate
-        required: false
-        default: null
-        choices: []
-        aliases: []
     gateway_ip:
         description:
             - Gateway IP for subnet
@@ -76,20 +69,6 @@ options:
         default: 'private'
         choices: []
         aliases: []
-    dhcp_name:
-        description:
-            - Name for the DHCP relay label to be added  
-        required: false 
-        default: null 
-        choices: []
-        aliases: []
-    dhcp_scope:
-        description:
-            - DHCP Relay label scope can be either tenant or infra 
-        required: false 
-        default: 'infra' 
-        choices: ['tenant','infra']
-        aliases: []
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
@@ -108,7 +87,7 @@ options:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
     protocol:
@@ -130,16 +109,19 @@ EXAMPLES =  '''
      arp_flooding: "{{ arp_flooding }}"
      l2_unknown_unicast: "{{ l2_unknown_unicast }}"
      l3_unknown_multicast: "{{ l3_unknown_multicast }}"
+<<<<<<< HEAD
+     multi_dest: "{{ multi_dest }}" 
+=======
      multi_dest: "{{ multi_dest }}"
      l3_out: "{{ l3_out }}"
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
      gateway_ip: "{{ gateway_ip }}"
      subnet_mask: "{{ subnet_mask }}"
      scope: "{{ scope }}"
-     dhcp_name: "{{ dhcp_name }}"
-     dhcp_scope: "{{ dhcp_scope }}"
      host: "{{ inventory_hostname }}"
      username: "{{ username }}"
      password: "{{ password }}"
+     protocol: "{{ protocol }}"
 
 
 '''
@@ -160,17 +142,19 @@ def main():
         l2_unknown_unicast=dict(choices=['proxy','flood'], default='proxy'),
         l3_unknown_multicast=dict(choices=['flood','opt-flood'], default='flood'),
         multi_dest=dict(choices=['bd-flood','drop','encap-flood'], default='bd-flood'),
-        l3_out=dict(type='str'),
         vrf_name=dict(type='str'),
-        gateway_ip=dict(type='str'),
-        subnet_mask=dict(type='str'),
+        gateway_ip=dict(type='str', default=0, required=False),
+        subnet_mask=dict(type='str', default=0, required=False),
         scope=dict(type='str',default='private'),
+<<<<<<< HEAD
+=======
         dhcp_name=dict(type='str'),
         dhcp_scope=dict(choices=['tenant','infra'],default='infra'),
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
         host=dict(required=True),
         username=dict(type='str', default='admin'),
         password=dict(type='str'),
-        protocol=dict(choices=['http', 'https'], default='https'),
+        protocol=dict(choices=['http', 'https'], default='http'),
         ), supports_check_mode=False)
 
     tenant_name = module.params['tenant_name']
@@ -180,7 +164,6 @@ def main():
     l2_unknown_unicast = module.params['l2_unknown_unicast']
     l3_unknown_multicast = module.params['l3_unknown_multicast']
     multi_dest = module.params['multi_dest']
-    l3_out = module.params['l3_out']
     vrf_name = module.params['vrf_name']
     username = module.params['username']
     password = module.params['password']
@@ -190,17 +173,16 @@ def main():
     #subnet
     gateway_ip = module.params['gateway_ip']
     subnet_mask = module.params['subnet_mask']
-    ip = gateway_ip + "/" + subnet_mask
+    if gateway_ip != 0  and subnet_mask != 0:
+       ip = gateway_ip + "/" + subnet_mask
+    else:
+       ip = ''
     scope = module.params['scope']
    
-    #DHCP Relay Labels
-    dhcp_name = module.params['dhcp_name']
-    dhcp_scope = module.params['dhcp_scope']
-
     post_uri = 'api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name + '.json'
     get_uri = 'api/node/class/fvBD.json'
 
-    config_data = {
+    config_data =  {
          "fvBD": {
              "attributes": {
                   "descr": "test",
@@ -209,42 +191,30 @@ def main():
                   "unkMcastAct": l3_unknown_multicast,
                   "multiDstPktAct": multi_dest
                },
-              "children":[{  
-                  "fvRsBDToOut":{  
-                     "attributes":{  
-                        "tnL3extOutName":l3_out
-                           }
-                      }
-                  },
-                  {
-                      "fvRsCtx": {
-                          "attributes": {
-                              "tnFvCtxName": vrf_name
+              "children":[{
+                   "fvRsCtx": {
+                      "attributes": {
+                          "tnFvCtxName": vrf_name
                          }
                       }
-                  },
-                  {
+                  }
+                ]
+
+           }
+     }
+
+    subnet_config_data =  {
                    "fvSubnet":{
                       "attributes":{
                           "ip": ip,
                           "scope": scope
-                      	}
-	            }
-                  },
-                  {
-                   "dhcpLbl":{
-                     "attributes": {
-                       "name": dhcp_name,
-                       "owner": dhcp_scope
                         }
-                     }
+                    }
                   }
-		]
-              
-           }
-     }
+
 
     payload_data = json.dumps(config_data)
+    subnet_payload_data = json.dumps(subnet_config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
 
@@ -271,6 +241,22 @@ def main():
     if action == 'post':
         req = requests.post(post_url, cookies=authenticate.cookies,
                             data=payload_data, verify=False)
+        if gateway_ip != 0:
+           get_bd = requests.get(post_url, cookies=authenticate.cookies,
+                                 data=payload_data, verify=False)
+           data =json.loads(get_bd.text)
+           count = data['totalCount']
+           count = int(count)
+           bridge_domain_list = []
+           if get_bd.status_code == 200:
+              for name in range(0,count):
+                  bd = data['imdata'][name]['fvBD']['attributes']['name']
+                  bridge_domain_list.append(bd)
+                  if bd_name in bridge_domain_list:
+                      subnet_req = requests.post(post_url, cookies=authenticate.cookies,
+                                                 data=subnet_payload_data, verify=False)
+                  else:
+                       module.fail_json(msg='Subnet creation failed.')
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
@@ -292,11 +278,12 @@ def main():
     results['status'] = status
     results['response'] = response
     results['changed'] = changed
-
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
-    main()
-except:
-    pass
+#try:
+ # main()
+#except:
+ # pass
+if __name__ == '__main__':
+   main()

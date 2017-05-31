@@ -122,18 +122,31 @@ import socket
 import json
 import requests
 
+
 def main():
     ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
             action=dict(choices=['post', 'get']),
             tenant_name=dict(type='str', required=True),
+<<<<<<< HEAD
+            app_profile_name=dict(type='str', required=True),
+=======
             app_profile_name =dict(type='str', required=True),
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
             epg_name=dict(type='str', required=True),
-	    domain=dict(choices=['phys'], default='phys'),
+	    domain=dict(choices=['phys', 'vmm'], default='phys'),
 	    domain_profile=dict(type='str', required=True),
+<<<<<<< HEAD
+            vlan_mode=dict(choices=['dynamic','static'],default = 'dynamic'),
+            encap=dict(type='str', required=False),
+            deploy_immediacy=dict(choices=['immediate','on-demand'], default='on-demand'),
+            resolution_immediacy=dict(choices=['immediate','on-demand', 'pre-provision'], default = 'on-demand'),
+            netflow=dict(choices=['enabled','disabled'], default = 'disabled'),
+=======
             encap=dict(type='str', required=True),
             immediacy=dict(choices=['immediate','on-demand'], default='immediate'),
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
@@ -143,14 +156,32 @@ def main():
     )
 
     tenant_name = module.params['tenant_name']
+<<<<<<< HEAD
+    app_profile_name = module.params['app_profile_name']
+=======
     app_profile_name  = module.params['app_profile_name ']
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
     epg_name = module.params['epg_name']
+    vlan_mode = module.params['vlan_mode']
+    netflow= module.params['netflow']
     domain = module.params['domain']
+    if domain == 'vmm':
+       domain = 'vmmp-VMware/dom'
     domain_profile = module.params['domain_profile']
     encap = module.params['encap']
+<<<<<<< HEAD
+    encap = str(encap)
+    deploy_immediacy = module.params['deploy_immediacy']
+    if deploy_immediacy == 'on-demand':
+       deploy_immediacy = 'lazy'
+    resolution_immediacy = module.params['resolution_immediacy']
+    if resolution_immediacy == 'on-demand':
+       resolution_immediacy = 'lazy'
+=======
     immediacy = module.params['immediacy']
     if immediacy == 'on-demand':
 	immediacy = 'lazy'
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
@@ -158,21 +189,41 @@ def main():
 
     action = module.params['action']
 
+<<<<<<< HEAD
+    post_uri = '/api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name+'/epg-'+epg_name+'/rsdomAtt-[uni/'+domain+'-'+domain_profile+ '].json'
+=======
     post_uri = '/api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name +'/epg-'+epg_name+'/rsdomAtt-[uni/'+domain+'-'+domain_profile+ '].json'
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
     get_uri = '/api/node/class/fvRsDomAtt.json'
 
-    ''' Config payload to enable the physical interface '''
     config_data = {
+<<<<<<< HEAD
+		"fvRsDomAtt": {
+			"attributes": {
+                                "encap" : 'vlan-'+encap,
+                                "instrImedcy": deploy_immediacy,
+                                "netflowPref" : netflow,
+                         	"resImedcy": resolution_immediacy
+=======
 	"fvRsDomAtt": {
 		"attributes": {
 			"dn": "uni/tn-"+tenant_name+"/ap-"+app_profile_name +"/epg-"+epg_name+"/rsdomAtt-[uni/"+domain+"-" + domain_profile+"]",
 			"encap": "vlan-"+encap+"",
 			"instrImedcy": ""+immediacy+"",
+>>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
 		}
 	}
 	
-    }
-    payload_data = json.dumps(config_data) 
+     }
+   
+
+    if domain == "vmmp-VMware/dom" and vlan_mode == 'dynamic':
+       del config_data['fvRsDomAtt']['attributes']['encap']
+
+    if domain == "phys":
+       del config_data['fvRsDomAtt']['attributes']['netflowPref']
+    
+    payload_data = json.dumps(config_data)
 
     ''' authentication || || Throw an error otherwise'''
     apic = "{0}://{1}/".format(protocol, host)
@@ -227,3 +278,4 @@ try:
     main()
 except:
     pass
+

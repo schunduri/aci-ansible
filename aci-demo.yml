@@ -1,0 +1,145 @@
+---
+#Demo playbook
+
+  - name: Configuring Tenant
+    hosts: apic
+    connection: local
+    gather_facts: no
+
+    vars:
+        action: post
+        tenant_name: production
+        vrf_name: vrf1
+        bd1:
+            name: bd_vlan_100
+            ip: 192.168.100.4
+            mask: 24
+        bd2:
+            name: bd_vlan_200
+            ip: 192.168.200.4
+            mask: 24
+
+        app_profile_name: app1
+        epg_name1: epg_vlan_100
+        epg_name2: epg_vlan_200
+        vmm_domain: prod
+        protocol: http    
+
+    tasks:
+
+      - name: Creating Tenant
+        aci_tenant:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           descr: 'tenant'
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Creating Vrf
+        aci_context:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           vrf_name: "{{ vrf_name }}"
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Creating BD
+        aci_bridge_domain:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           vrf_name: "{{ vrf_name }}"
+           bd_name: "{{ item.name }}"
+           gateway_ip: "{{ item.ip }}"
+           subnet_mask: "{{ item.mask }}"
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+        with_items:
+            - "{{ bd1 }}"
+            - "{{ bd2 }}"
+
+      - name: Associating L3 Out with BD
+        aci_l3Out:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           bd_name: "{{ bd1.name }}"
+           l3_out: default
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+        
+      - name: Associationg DHCP Relay Labels
+        aci_dhcp_association:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           bd_name: "{{ bd2.name }}"
+           dhcp_name: default
+           dhcp_scope: infra
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create ANP
+        aci_anp:
+           action: "{{ action }}"
+           app_profile_name: "{{ app_profile_name }}"
+           tenant_name: "{{ tenant_name }}"
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create EPG_100
+        aci_epg:
+           action: "{{ action }}"
+           app_profile_name: "{{ app_profile_name }}"
+           tenant_name: "{{ tenant_name }}"
+           epg_name: "{{ epg_name1 }}"
+           bd_name: "{{ bd1.name }}"
+           contract_name_provider: default
+           contract_name_consumer: default
+           provider_consumer: both
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create EPG_200
+        aci_epg:
+           action: "{{ action }}"
+           app_profile_name: "{{ app_profile_name }}"
+           tenant_name: "{{ tenant_name }}"
+           epg_name: "{{ epg_name2 }}"
+           bd_name: "{{ bd2.name }}"
+           contract_name_provider: default
+           contract_name_consumer: default
+           provider_consumer: both
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Deploying EPG_100
+        aci_epg_domain_binding:
+           action: "{{ action }}"
+           app_profile_name: "{{ app_profile_name }}"
+           tenant_name: "{{ tenant_name }}"
+           epg_name: "{{ item }}"
+           domain: vmm
+           domain_profile: "{{ vmm_domain }}"
+           deploy_immediacy: immediate
+           host: "{{ inventory_hostname }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+        with_items:
+            - "{{ epg_name1 }}"
+            - "{{ epg_name2 }}"
+
