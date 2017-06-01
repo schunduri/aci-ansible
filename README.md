@@ -13,6 +13,8 @@
   * [aci_filter - manages top level filter objects](#aci_filter)
   * [aci_filter_entry - manages filter entries that will be assigned to a filter](#aci_filter_entry)
   * [aci_bridge_domain - manages bridge domains in an aci fabric](#aci_bridge_domain)
+  * [aci_dhcp_association - manages DHCP Relay Labels in bridge domains](#aci_dhcp_association)
+  * [aci_l3Out - manages L3 out association to bridge domains in an aci fabric](#aci_l3Out)
   * [aci_contract - manages initial contracts (does not include contract subjs)](#aci_contract)
   * [aci_contract_subject - manages contract subjects](#aci_contract_subject)
   * [aci_tenant - manage tenants in an aci fabric](#aci_tenant)
@@ -34,7 +36,6 @@
   * [aci_action_rule_profile - manages action rule profiles](#aci_action_rule_profile)
   * [aci_aep - manages attachable entity profile](#aci_aep)
   * [aci_epg_domain_binding - manages epg physical domain binding](#aci_epg_domain_binding)
-  * [aci_dynamic_vmm_binding - manages epg vmm dynamic domain binding](#aci_dynamic_vmm_binding)
   * [aci_rest - direct access to the apic api](#aci_rest)
  
  
@@ -218,12 +219,9 @@ Manages bridge domains in an ACI fabric
 | l2_unknown_unicast | no | proxy | <ul><li>flood</li> <li>proxy</li></ul> | L2 Unknown Unicast |
 | l3_unknown_multicast | no | flood | <ul><li>opt-flood</li><li>flood</li></ul> | L3 Unknown Multicast |
 | multi_dest | no | bd-flood | <ul> <li>bd-flood</li><li>drop</li><li>encap-flood</li> </ul> | Multi Destination Flooding |
-| l3_out | yes | | <ul></ul> | L3 out association with the Bridge Domain |
 | gateway_ip | yes | | <ul></ul> | IP address of the gateway |
 | subnet_mask |  yes  |  | <ul></ul> |  subnet mask value  |
 | scope | no | private | <ul></ul> | Scope of  the subnet | 
-| dhcp_name | yes | | <ul></ul> | Name  of the DHCP Relay Label |
-| dhcp_scope | no | infra | <ul><li> tenant <li> <li> infra </li> </ul> | Scope of the DHCP Relay label |
 
 
  
@@ -240,12 +238,9 @@ aci_bridge_domain:
      l2_unknown_unicast: "{{ l2_unknown_unicast }}"
      l3_unknown_multicast: "{{ l3_unknown_multicast }}"
      multi_dest: "{{ multi_dest }}" 
-     l3_out: "{{ l3_out }}"
      gateway_ip: "{{ gateway_ip }}"
      subnet_mask: "{{ subnet_mask }}"
      scope: "{{ scope }}"
-     dhcp_name: "{{ dhcp_name }}"
-     dhcp_scope: "{{ dhcp_scope }}"
      host: "{{ inventory_hostname }}"
      username: "{{ username }}"
      password: "{{ password }}"
@@ -259,6 +254,98 @@ aci_bridge_domain:
 - Tenant and context must exist prior to using this module
 
 - One subnet can be added per task (per module call)
+
+---
+
+## aci_dhcp_association
+Associating DHCP Relay Labels to Bridge Domains
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+ Manages DHCP Relay Labels in bridge domains within an ACI fabric
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
+| tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
+| dhcp_name | yes | | <ul></ul> | Name  of the DHCP Relay Label |
+| dhcp_scope | no | infra | <ul><li> tenant <li> <li> infra </li> </ul> | Scope of the DHCP Relay label |
+
+#### Examples
+
+```
+
+aci_dhcp_association:
+     action: "{{ action }}"
+     tenant_name: "{{ tenant_name }}"
+     bd_name: "{{ bd_name }}"
+     dhcp_name: "{{ dhcp_name }}"
+     dhcp_scope: "{{ dhcp_scope }}"
+     host: "{{ inventory_hostname }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     protocol: "{{ protocol }}"
+
+```
+#### Notes
+
+- Tenant and context must exist prior to using this module
+
+---
+
+## aci_l3Out
+Associating L3 Out to Bridge Domains
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+ Manages L3 Out in bridge domains within an ACI fabric
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
+| tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
+| l3_out | yes | | <ul></ul> | L3 out association with the Bridge Domain |
+
+#### Examples
+
+```
+aci_l3Out:
+     action: "{{ action }}"
+     tenant_name: "{{ tenant_name }}"
+     bd_name: "{{ bd_name }}"
+     l3_out: "{{ l3_out }}"
+     host: "{{ inventory_hostname }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     protocol: "{{ protocol }}"
+
+```
+
+
+#### Notes
+
+- Tenant and bridge domain must exist prior to using this module
+
 
 ---
 
@@ -1189,58 +1276,6 @@ Manage Physical domain binding to EPGs in an ACI fabric
 - Tenant , Application Profile and EPG must exist before using this module
 
 ---
-
-## aci_epg_domain_binding
-Manage Physical domain binding to EPGs in an ACI fabric
-
-  * Synopsis
-  * Options
-  * Examples
-
-#### Synopsis
- Offers ability to manage Physical domain binding to EPGs
-#### Options
-
-| Parameter     | required    | default  | choices    | comments |
-| ------------- |-------------| ---------|----------- |--------- |
-| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
-| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
-| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
-| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
-| tenant_name  | yes |  | <ul></ul> | Name of the tenant, the EPG is a part of |
-| app_profile_name | yes | <ul></ul> | Name of the Application profile that contains the EPG |
-| epg_name | yes |  | <ul></ul> | Name of the EPG to which the VMM Domain will be associated |
-| domain_profile | yes | | <ul></ul> | Name of the Physical domain profile |
-| deploy_immediacy | no | on-demand | <ul><li>immediate</li> <li>on-demand</li></ul> | Deploy Immediacy |
-| resolution_immediacy | no | immediate | <ul><li>immediate</li> <li>on-demand</li> <li>pre-provision</li></ul> | Resolution Immediacy |
-| netflow | no | disabled | <ul><li>enabled</li> <li>disbaled</li></ul> | NetFlow Preference|
-
-
-#### Examples
-
-```
-    aci_dynamic_vmm_binding:
-           action: "{{ action }}"
-           app_profile_name: "{{ app_profile_name }}"
-           tenant_name: "{{ tenant_name }}"
-           epg_name: "{{ epg_name }}"
-           domain_profile: "{{ domain_profile }}"
-           deploy_immediacy: "{{ deploy_immediacy }}"
-	   resolution_immediacy: "{{ resolution_immediacy }}"
-	   netflow: "{{ netflow }}"
-           host: "{{ inventory_hostname }}"
-           username: "{{ user }}"
-           password: "{{ pass }}"
-	   protocol: "{{ protocol }}"
-
-```
-#### NOTES
-- Tenant , Application Profile and EPG must exist before using this module
-
----
-
-
 ## aci_rest
 Direct access to the APIC API
 
