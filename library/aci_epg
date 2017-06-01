@@ -201,11 +201,8 @@ def main():
     priority_consumer = module.params['priority_consumer']
     priority = module.params['priority']
     descr = str(descr)
-<<<<<<< HEAD
     priority=module.params['priority']
     priority = str(priority)
-=======
->>>>>>> fb9edfc129a24c13a2d82f7e1758ab561e95d9b3
     intra_epg_isolation=module.params['intra_epg_isolation']
     username = module.params['username']
     password = module.params['password']

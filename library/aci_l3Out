@@ -189,10 +189,8 @@ def main():
 
 from ansible.module_utils.basic import *
 
-# try:
-#     main()
-# except:
-#     pass
-if __name__ == '__main__':
-   main()
+try:
+    main()
+except:
+    pass
 
