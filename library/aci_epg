@@ -196,7 +196,7 @@ def main():
     descr=str(descr)
     contract_name_provider = module.params['contract_name_provider']
     contract_name_consumer = module.params['contract_name_consumer']
-    contract_type = module.params['provider_consumer']
+    contract_type = module.params['contract_type']
     priority_provider = module.params['priority_provider']
     priority_consumer = module.params['priority_consumer']
     priority = module.params['priority']

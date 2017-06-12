@@ -105,7 +105,7 @@
            bd_name: "{{ bd1.name }}"
            contract_name_provider: default
            contract_name_consumer: default
-           provider_consumer: both
+           contract_type: both
            host: "{{ inventory_hostname }}"
            username: "{{ user }}"
            password: "{{ pass }}"
@@ -120,7 +120,7 @@
            bd_name: "{{ bd2.name }}"
            contract_name_provider: default
            contract_name_consumer: default
-           provider_consumer: both
+           contract_type: both
            host: "{{ inventory_hostname }}"
            username: "{{ user }}"
            password: "{{ pass }}"
