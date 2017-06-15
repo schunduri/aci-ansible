@@ -1369,7 +1369,7 @@ Fetch fabric topology data
 
 ```
     aci_fabric_inventory:
-        node_id: "{{ node_id }""
+        node_id: "{{ node_id }}"
         command: "{{ command }}"
         level: "{{ level }}"
         filename: "{{ filename }}"
