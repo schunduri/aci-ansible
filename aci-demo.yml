@@ -32,7 +32,7 @@
            action: "{{ action }}"
            tenant_name: "{{ tenant_name }}"
            descr: 'tenant'
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -42,7 +42,7 @@
            action: "{{ action }}"
            tenant_name: "{{ tenant_name }}"
            vrf_name: "{{ vrf_name }}"
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -55,7 +55,7 @@
            bd_name: "{{ item.name }}"
            gateway_ip: "{{ item.ip }}"
            subnet_mask: "{{ item.mask }}"
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -69,7 +69,7 @@
            tenant_name: "{{ tenant_name }}"
            bd_name: "{{ bd1.name }}"
            l3_out: default
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -81,7 +81,7 @@
            bd_name: "{{ bd2.name }}"
            dhcp_name: default
            dhcp_scope: infra
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -91,7 +91,7 @@
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
            tenant_name: "{{ tenant_name }}"
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -106,7 +106,7 @@
            contract_name_provider: default
            contract_name_consumer: default
            contract_type: both
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -121,7 +121,7 @@
            contract_name_provider: default
            contract_name_consumer: default
            contract_type: both
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
@@ -135,7 +135,7 @@
            domain: vmm
            domain_profile: "{{ vmm_domain }}"
            deploy_immediacy: immediate
-           host: "{{ inventory_hostname }}"
+           host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
