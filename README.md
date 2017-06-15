@@ -37,7 +37,7 @@
   * [aci_aep - manages attachable entity profile](#aci_aep)
   * [aci_epg_domain_binding - manages epg physical domain binding](#aci_epg_domain_binding)
   * [aci_rest - direct access to the apic api](#aci_rest)
- 
+  * [aci_fabric_inventory - Fetch fabric topology data](#aci_fabric_inventory) 
  
  
 ---
@@ -1237,6 +1237,7 @@ Manage Physical domain binding to EPGs in an ACI fabric
 
 #### Synopsis
  Offers ability to manage Physical domain binding to EPGs
+
 #### Options
 
 | Parameter     | required    | default  | choices    | comments |
@@ -1338,6 +1339,48 @@ Direct access to the APIC API
 
 - Tenant must be exist prior to using this module
 
+---
+
+## aci_fabric_inventory
+Fetch fabric topology data 
+
+  * Synopsis
+  * Options
+  * Examples
+
+#### Synopsis
+ Fetch fabric topolofy data specific to a node 
+
+#### Options
+
+| Parameter     | required    | default  | choices    | comments |
+| ------------- |-------------| ---------|----------- |--------- |
+| host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
+| username  |   yes  |  admin  | <ul></ul> |  Username used to login to the switch  |
+| password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
+| protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
+| node_id |   yes  |  | <ul></ul> |  ID of the node whose details have been fetched|
+| command  |   no  | all | <ul><li>fantray</li><li>interfaces</li><li>power-supplies</li><li>firmware</li><li>supervisor-module</li><li>linecard-module</li><li>nodes</li><li>all</li></ul> |  Type of information being requested  |
+| level | no | brief | <ul><li>brief</li><li>detail</li></ul> | MO query (brief) or Subtree query (detail)
+| filename | no | | | Name of the output text file to store the response from APIC for the request being made 
+ 
+
+#### Examples
+
+```
+    aci_fabric_inventory:
+        node_id: "{{ node_id }""
+        command: "{{ command }}"
+        level: "{{ level }}"
+        filename: "{{ filename }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ user }}"
+        password: "{{ pass }}"
+        protocol: "{{ protocol }}"
+
+```
+
+ 
 
 ---
 Created by Cisco
