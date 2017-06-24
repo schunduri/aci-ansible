@@ -8,21 +8,21 @@
 
     vars:
         action: post
-        tenant_name: production
-        vrf_name: vrf1
-        bd1:
-            name: bd_vlan_100
-            ip: 192.168.100.4
-            mask: 24
-        bd2:
-            name: bd_vlan_200
-            ip: 192.168.200.4
+        tenant_name: Ansible
+        vrf_name: vrf_ansible
+        bd:
+            name: bd_ansible_1
+            ip: 9.9.9.1
             mask: 24
 
         app_profile_name: app1
-        epg_name1: epg_vlan_100
-        epg_name2: epg_vlan_200
-        vmm_domain: prod
+        filter_name: Contract1_filter
+        entry_name: Contract1_entry
+        contract_name: Contract1
+        subject_name: Subject1
+        epg_name1: web_epg
+        epg_name2: db_epg
+        vmm_domain: Pod1
         protocol: http    
 
     tasks:
@@ -52,40 +52,14 @@
            action: "{{ action }}"
            tenant_name: "{{ tenant_name }}"
            vrf_name: "{{ vrf_name }}"
-           bd_name: "{{ item.name }}"
-           gateway_ip: "{{ item.ip }}"
-           subnet_mask: "{{ item.mask }}"
+           bd_name: "{{ bd.name }}"
+           gateway_ip: "{{ bd.ip }}"
+           subnet_mask: "{{ bd.mask }}"
            host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
-        with_items:
-            - "{{ bd1 }}"
-            - "{{ bd2 }}"
-
-      - name: Associating L3 Out with BD
-        aci_l3Out:
-           action: "{{ action }}"
-           tenant_name: "{{ tenant_name }}"
-           bd_name: "{{ bd1.name }}"
-           l3_out: default
-           host: "{{ host }}"
-           username: "{{ user }}"
-           password: "{{ pass }}"
-           protocol: "{{ protocol }}"
-        
-      - name: Associationg DHCP Relay Labels
-        aci_dhcp_association:
-           action: "{{ action }}"
-           tenant_name: "{{ tenant_name }}"
-           bd_name: "{{ bd2.name }}"
-           dhcp_name: default
-           dhcp_scope: infra
-           host: "{{ host }}"
-           username: "{{ user }}"
-           password: "{{ pass }}"
-           protocol: "{{ protocol }}"
-
+     
       - name: Create ANP
         aci_anp:
            action: "{{ action }}"
@@ -96,37 +70,84 @@
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
 
-      - name: Create EPG_100
+      - name: Create web_epg
         aci_epg:
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
            tenant_name: "{{ tenant_name }}"
            epg_name: "{{ epg_name1 }}"
-           bd_name: "{{ bd1.name }}"
-           contract_name_provider: default
-           contract_name_consumer: default
+           bd_name: "{{ bd.name }}"
+           contract_name_provider: "{{ contract_name }}"
+           contract_name_consumer: "{{ contract_name }}"
            contract_type: both
            host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
 
-      - name: Create EPG_200
+      - name: Create db_epg
         aci_epg:
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
            tenant_name: "{{ tenant_name }}"
            epg_name: "{{ epg_name2 }}"
-           bd_name: "{{ bd2.name }}"
-           contract_name_provider: default
-           contract_name_consumer: default
+           bd_name: "{{ bd.name }}"
+           contract_name_provider: "{{ contract_name }}"
+           contract_name_consumer: "{{ contract_name }}"
            contract_type: both
            host: "{{ host }}"
            username: "{{ user }}"
            password: "{{ pass }}"
            protocol: "{{ protocol }}"
 
-      - name: Deploying EPG_100
+      - name: Create a Filter
+        aci_filter:
+           action: "{{ action }}"
+           filter_name: "{{ filter_name }}"
+           tenant_name: "{{ tenant_name }}"
+           host: "{{ host }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create Filter Entry
+        aci_filter_entry:
+           action: "{{ action }}"
+           entry_name: "{{ entry_name }}"
+           tenant_name: "{{ tenant_name }}"
+           filter_name: "{{ filter_name }}"
+           host: "{{ host }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create a Tenant Contract
+        aci_contract:
+           action: "{{ action }}"
+           tenant_name: "{{ tenant_name }}"
+           contract_name: "{{ contract_name }}"
+           scope: tenant
+           host: "{{ host }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+      - name: Create Contract Subjects
+        aci_contract_subjects:
+           action: "{{ action }}"
+           subject_name: "{{ subject_name }}"
+           contract_name: "{{ contract_name }}"
+           tenant_name: "{{ tenant_name }}"
+           reverse_filter: yes
+           filter_name: "{{ filter_name }}"
+           host: "{{ host }}"
+           username: "{{ user }}"
+           password: "{{ pass }}"
+           protocol: "{{ protocol }}"
+
+
+
+      - name: Deploying EPG
         aci_epg_domain_binding:
            action: "{{ action }}"
            app_profile_name: "{{ app_profile_name }}"
