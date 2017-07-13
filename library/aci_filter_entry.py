@@ -2,22 +2,21 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_anp
-short_description: Manage top level application network profile objects
+module: aci_filter_entry
+short_description: Manages filter entries that will be assigned to a filter
 description:
-    -  Manage top level application network profile object, i.e. this does
-      not manage EPGs.
+    -  Manages filter entries that will be assigned to an already created filter
 author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
-notes: Tenant must exist prior to using this module
+notes: Tenant must be exist prior to using this module
 options:
    action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post', 'get']
+        choices: ['post','get', 'delete']
         aliases: []
    tenant_name:
         description:
@@ -26,12 +25,26 @@ options:
         default: null
         choices: []
         aliases: []
-   app_profile_name:
+   entry_name:
         description:
-            - Tenant Name
+            - Filter Entry Name
         required: true
         default: null
         choices: []
+        aliases: []
+   ether_type:
+        description:
+            - Ether Type 
+        required:false
+        default: ip
+        choices: []
+        aliases: []
+   icmp_msg_type:
+        description:
+            - ICMP Message type v4
+        required:false
+        default: unspecified
+        choices: ['echo','echo-rep','dst-unreach','unspecified']
         aliases: []
     descr:
         description:
@@ -61,7 +74,7 @@ options:
         default: null
         choices: []
         aliases:[]                                                                  
-     protocol:
+    protocol:
         description:
             - Dictates connection protocol to use
         required: false
@@ -72,10 +85,13 @@ options:
 
 EXAMPLES = '''
 
-    aci_anp:
+    aci_filter_entry:
        action: "{{ action }}"
-       app_profile_name: "{{ app_profile_name }}"
+       entry_name: "{{ entry_name }}"
        tenant_name: "{{ tenant_name }}"
+       ether_name: "{{  ether_name }}"
+       icmp_msg_type: "{{ icmp_msg_type }}"
+       filter_name: "{{ filter_name }}"
        descr: "{{ descr }}"
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
@@ -93,32 +109,48 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['post', 'get', 'delete']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-            app_profile_name=dict(type="str"),
-            tenant_name=dict(type="str"),
-            descr=dict(type="str"),
+            entry_name=dict(type="str", required=True),
+            ether_type=dict(type="str", required=False, default='unspecified'),
+            filter_name=dict(type="str", required=True),
+            icmp_msg_type=dict(choices=['echo','echo-rep','dst-unreach','unspecified'], default='unspecified'),
+            tenant_name=dict(type="str", required=True),
+            descr=dict(type="str", required=False),
         ),
         supports_check_mode=False
     )
 
-    app_profile_name=module.params['app_profile_name']
+    entry_name=module.params['entry_name']
+    ether_type=module.params['ether_type']
     tenant_name=module.params['tenant_name']
     descr=module.params['descr']
-    descr = str(descr)
+    descr=str(descr)
+    filter_name=module.params['filter_name']
+    icmp_msg_type=module.params['icmp_msg_type']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
     action = module.params['action']
-    post_uri ='api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name+'.json'
-    get_uri = 'api/node/class/fvAp.json'
 
+    post_uri ='api/node/mo/uni/tn-'+tenant_name+'/flt-'+filter_name+ '.json'
+    get_uri = 'api/node/class/vzEntry.json'
+    delete_uri = 'api/node/mo/uni/tn-' +tenant_name+'/flt-'+filter_name+'/e-'+entry_name+'.json'
     ''' Config payload to enable the physical interface '''
-    config_data = {"fvAp":{"attributes":{"name":app_profile_name, "descr":descr }}}
+    config_data = {
+        "vzEntry": {
+           "attributes": {
+              "etherT": ether_type,
+              "name": entry_name, 
+              "descr":descr,
+              "icmpv4T": icmp_msg_type
+              }
+            }
+        }
     payload_data = json.dumps(config_data)
 
     ''' authentication || || Throw an error otherwise'''
@@ -139,11 +171,18 @@ def main():
         get_uri = get_uri[1:]
     get_url = apic + get_uri
 
+    if delete_uri.startswith('/'):
+       delete_uri = delete_uri[1:]
+    delete_url = apic + delete_uri
+
     if action == 'post':
         req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+
+    elif action == 'delete':
+        req = requests.delete(delete_url, cookies=authenticate.cookies, verify=False)
 
     ''' Check response status and parse it for status || Throw an error otherwise '''
     response = req.text
@@ -166,8 +205,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
-   main()
-except: 
-   pass
-
+if __name__ == "__main__":
+    main()

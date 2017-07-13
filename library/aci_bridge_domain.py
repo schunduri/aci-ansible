@@ -15,10 +15,10 @@ notes:
 options:
    action:
         description:
-            - post or get
+            - post, get or delete
         required: true
         default: null
-        choices: ['post', 'get']
+        choices: ['post', 'get','delete']
         aliases: []
    tenant_name:
         description:
@@ -130,7 +130,7 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post']),
+        action=dict(choices=['get', 'post', 'delete']),
         tenant_name=dict(type='str', required=True),
         bd_name=dict(type='str', required=True),
         arp_flooding=dict(choices=['yes','no'], default="yes"),
@@ -250,6 +250,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -271,9 +273,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-#try:
- # main()
-#except:
- # pass
 if __name__ == '__main__':
    main()

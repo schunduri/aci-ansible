@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_span_dst_group
+module: aci_l2_interface_policy
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,32 +11,31 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
-    - Tenant should already exist
 options:
     action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
-    tenant_name:
+    l2_policy:
         description:
-            - Tenant Name
+            - L2 interface policy Name
         required: true
         default: null
         choices: []
         aliases: []
-    dst_group:
+    vlan_scope:
         description:
-            - Span destination group name
-        required: true
-        default: null
-        choices: []
+            - VLAN Scope 
+        required: false
+        default: 'global'
+        choices: ['global', 'portlocal']
         aliases: []
     descr:
         description:
-            - Description for Span destination group
+            - Description for L2 interface policy
         required: false
         default: null
         choices: []
@@ -73,14 +72,14 @@ options:
 
 EXAMPLES =  '''
 
-    aci_span_dst_group: 
-        action:"{{ action }}" 
-        tenant_name:"{{ tenant_name }}" 
-	dst_group:"{{ dst_group }}" 
- 	descr:"{{ descr }}" 
-	host:"{{ inventory_hostname }}" 
-	username:"{{ username }}"
-	password:"{{ password }}"
+    aci_l2_interface_policy: 
+        action: "{{ action }}"
+        l2_policy: "{{ l2_policy }}"
+        vlan_scope: "{{ vlan_policy }}"
+        descr: "{{ descr }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
 	protocol: "{{ protocol }}"
 
 '''
@@ -96,9 +95,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post']),
-            dst_group=dict(type='str'),
-            tenant_name=dict(type='str'),
+            action=dict(choices=['get', 'post', 'delete']),
+            l2_policy=dict(type='str', required=True),
+            vlan_scope=dict(choices=['global', 'portlocal'], default='global', required=False),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -113,24 +112,24 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-    
 
-    dst_group = module.params['dst_group']
-    tenant_name = module.params['tenant_name'] 
+    l2_policy = module.params['l2_policy']
+    vlan_scope = module.params['vlan_scope'] 
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' + tenant_name +  '/destgrp-' + dst_group + '.json'
-    get_uri = '/api/node/class/spanDestGrp.json'
+    post_uri = '/api/mo/uni/infra/l2IfP-'  + l2_policy + '.json'
+    get_uri = '/api/node/class/infraAttEntityP.json'
 
     config_data = {
-      "spanDestGrp": {
-        "attributes": {
-          "descr": descr,
-          "name": dst_group
-        }
-      }  
-    } 
+        "l2IfPol": {
+        	"attributes": {
+			"descr": descr,
+			"name": l2_policy,
+			"vlanScope": vlan_scope
+			}
+		}
+      } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -161,6 +160,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -183,7 +184,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

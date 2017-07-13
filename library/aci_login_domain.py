@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_action_rule_profile
+module: aci_login_domain
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,32 +11,24 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
-    - Tenant should already exist
 options:
     action:
-	description:
-	    - post or get
-	required: true
-	default: null
-	choices: ['post', 'get']
-	aliases: []
-    tenant_name:
         description:
-            - Tenant Name
+            - post, get, delete
         required: true
         default: null
-        choices: []
+        choices: ['post','get', 'delete']
         aliases: []
-    action_rule_name:
+    login_domain:
         description:
-            - Action Rule Profile Name
+            - Domain name
         required: true
         default: null
         choices: []
         aliases: []
     descr:
-	description:
-            - Description for the action rule profile
+        description:
+            - Description for Login Domain
         required: false
         default: null
         choices: []
@@ -73,15 +65,14 @@ options:
 
 EXAMPLES =  '''
 
-     aci_action_rule_profile:
-         action: "{{ action }}"
-         tenant_name: "{{ tenant_name }}" 
-         action_rule_name: "{{ action_rule_name }}"
-         descr: "{{ descr }}"  
-         host: "{{ inventory_hostname }}"
-         username: "{{ username }}" 
-         password: "{{ password }}"
-	 protocol: "{{ protocol }}"
+    aci_login_domain:
+        action: "{{ action }}"
+        login_domain: "{{ login_domain }}"
+        descr: "{{ descr }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
@@ -91,43 +82,50 @@ import requests
 
 
 def main():
+    
     ''' Ansible module to take all the parameter values from the playbook '''
 
-    module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post']),
-        tenant_name=dict(type='str', required=True),
-        action_rule_name=dict(type='str', required=True),
-        descr=dict(type='str'),
-        host=dict(required=True),
-        username=dict(type='str', default='admin'),
-        password=dict(type='str'),
-        protocol=dict(choices=['http', 'https'], default='https'),
-        ), supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=dict(
+            action=dict(choices=['get', 'post','delete']),
+            login_domain=dict(type='str'),
+            descr=dict(type='str',required=False),       
+            host=dict(required=True),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+        ), 
+        supports_check_mode=False
+    )
 
-
-    tenant_name = module.params['tenant_name']
-    action_rule_name = module.params['action_rule_name']
-    descr = module.params['descr']
-    descr=str(descr)
     host = socket.gethostbyname(module.params['host'])
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
+    
+    login_domain = module.params['login_domain']
+    descr = module.params['descr']
+    descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' + tenant_name + '/attr-' + action_rule_name + '.json'
-    get_uri = 'api/node/class/rtctrlAttrP.json'
+    post_uri = '/api/mo/uni/userext/logindomain-'  + login_domain + '.json'
+    get_uri = '/api/node/class/aaaLoginDomain.json'
 
     config_data = {
-        "rtctrlAttrP": {
-                "attributes": {
-                       "descr": descr,
-                       "name": action_rule_name
-                    }
-              }
-
-         }
-     
+       "aaaLoginDomain": {
+		"attributes": {
+		    "descr": descr,
+	            "name": login_domain
+		},
+		 "children": [{
+		      "aaaDomainAuth": {
+		            "attributes": {
+				"realm": "local"
+					}
+				}
+			}]
+       	}
+    } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -158,7 +156,9 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
-
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+ 
     response = req.text
     status = req.status_code
 
@@ -180,7 +180,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

@@ -1,8 +1,9 @@
 #!/usr/bin/python
+
 DOCUMENTATION = '''
 ---
 
-module: aci_tenant
+module: aci_port_security
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -13,21 +14,28 @@ notes:
 options:
     action:
         description:
-            - post or get
+            - post, get, oe delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
-    tenant_name:
+    port_security:
         description:
-            - Tenant Name
+            - Port Security name
         required: true
         default: null
         choices: []
         aliases: []
+    max_end_points:
+        description:
+            - Maximum number of end points (range 0-12000) 
+        required: false
+        default: '0'
+        choices: []
+        aliases: []
     descr:
         description:
-            - Description for the AEP
+            - Description for Port Security
         required: false
         default: null
         choices: []
@@ -62,66 +70,83 @@ options:
         aliases: []
 '''
 
-EXAMPLES = '''
+EXAMPLES =  '''
 
-    aci_tenant:
-       action: "{{ action }}"
-       tenant_name: "{{ tenant_name }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
-
+    aci_port_security:
+        action: "{{ action }}"
+        port_security: "{{ port_security }}"
+        max_end_points: "{{ max_end_points }}"
+        descr: "{{ descr }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}" 
+        password: "{{ password }}"
+	protocol: "{{ protocol }}"
 '''
 
 import socket
 import json
 import requests
 
-def main():
 
+def main():
+    
+    
     ''' Ansible module to take all the parameter values from the playbook '''
+
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['get', 'post', 'delete']),
+            port_security=dict(type='str'),        
+            max_end_points=dict(type='str', default='0'),
+            descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-            tenant_name=dict(type="str"),
-            descr=dict(type="str", required=False),
-        ),
+        ), 
         supports_check_mode=False
     )
 
-    tenant_name=module.params['tenant_name']
-    descr=module.params['descr']
-    descr=str(descr)
-    
+    host = socket.gethostbyname(module.params['host'])
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
     action = module.params['action']
     
-    post_uri ='api/mo/uni/tn-'+tenant_name+'.json'
-    get_uri = 'api/node/class/fvTenant.json'
+    port_security = module.params['port_security']
+    max_end_points = module.params['max_end_points']
+    descr = module.params['descr']
+    descr=str(descr)
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {"fvTenant":{"attributes":{"name":tenant_name, "descr":descr }}}
+    post_uri = '/api/mo/uni/infra/portsecurityP-'  +port_security + '.json'
+    get_uri = '/api/node/class/l2PortSecurityPol.json'
+
+    config_data = {
+      "l2PortSecurityPol": {
+	"attributes": {
+	    "descr": descr,
+	    "maximum": max_end_points,
+	    "name": port_security,
+	    "violation": "protect"
+	     }
+          }
+      } 
     payload_data = json.dumps(config_data)
 
-    ''' authentication || || Throw an error otherwise'''
     apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+
+    auth = dict(aaaUser=dict(attributes=dict(name=username,
+                pwd=password)))
+    url = apic + 'api/aaaLogin.json'
+
+    authenticate = requests.post(url, data=json.dumps(auth), timeout=2,
+                                 verify=False)
 
     if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
+        module.fail_json(msg='could not authenticate to apic',
+                         status=authenticate.status_code,
+                         response=authenticate.text)
 
-    ''' Sending the request to APIC '''
     if post_uri.startswith('/'):
         post_uri = post_uri[1:]
     post_url = apic + post_uri
@@ -131,33 +156,34 @@ def main():
     get_url = apic + get_uri
 
     if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
+        req = requests.post(post_url, cookies=authenticate.cookies,
+                            data=payload_data, verify=False)
     elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+        req = requests.get(get_url, cookies=authenticate.cookies,
+                           data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
-    ''' Check response status and parse it for status || Throw an error otherwise '''
     response = req.text
     status = req.status_code
-    changed = False
 
+    changed = False
     if req.status_code == 200:
         if action == 'post':
             changed = True
         else:
             changed = False
-
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg='error issuing api request',
+                         response=response, status=status)
 
     results = {}
     results['status'] = status
     results['response'] = response
     results['changed'] = changed
+
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

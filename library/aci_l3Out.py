@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_dhcp_assocation
+module: aci_l3Out
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -13,9 +13,13 @@ requirements:
 notes:
     - Tenant should already exist
 options:
-	action:
-		description:
-			- post or get
+   action:
+	description:
+	    - post, get, or delete
+        required: true
+        default: null
+        choices: ['post', 'get', 'delete']
+        aliases: []
    tenant_name:
         description:
             - Tenant Name
@@ -30,43 +34,35 @@ options:
         default: null
         choices: []
         aliases: []
-        aliases: []
-    dhcp_name:
+   l3_out:
         description:
-            - Name for the DHCP relay label to be added  
-        required: false 
-        default: null 
+            - Name of the External routed network (L3Out) to associate
+        required: true
+        default: null
         choices: []
         aliases: []
-    dhcp_scope:
-        description:
-            - DHCP Relay label scope can be either tenant or infra 
-        required: false 
-        default: 'infra' 
-        choices: ['tenant','infra']
-        aliases: []
-    host:
+   host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
         aliases: []
-    username:
+   username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
         choices: []
         aliases: []
-    password:
+   password:
         description:
             - Password used to login to the switch
         required: true
-        default: null
+        default: 'C1sco12345'
         choices: []
         aliases: []
-    protocol:
+   protocol:
         description:
             - Dictates connection protocol to use
         required: false
@@ -77,16 +73,16 @@ options:
 
 EXAMPLES = '''
 
- aci_dhcp_association:
+ aci_l3Out:
      action: "{{ action }}"
      tenant_name: "{{ tenant_name }}" 
      bd_name: "{{ bd_name }}" 
-     dhcp_name: "{{ dhcp_name }}"
-     dhcp_scope: "{{ dhcp_scope }}"
+     l3_out: "{{ l3_out }}"
      host: "{{ inventory_hostname }}"
      username: "{{ username }}"
      password: "{{ password }}"
      protocol: "{{ protocol }}"
+
 
 '''
 
@@ -99,51 +95,36 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post'], required=False),
+        action=dict(choices=['get', 'post', 'delete']),
         tenant_name=dict(type='str', required=True),
         bd_name=dict(type='str', required=True),
-        dhcp_name=dict(type="str"),
-        dhcp_scope=dict(choices=['tenant', 'infra'], default='infra'),
+        l3_out=dict(type='str', required=True),
         host=dict(required=True),
         username=dict(type='str', default='admin'),
-        password=dict(type='str'),
+        password=dict(type='str', default='Cisco!123'),
         protocol=dict(choices=['http', 'https'], default='https'),
     ), supports_check_mode=False)
 
     tenant_name = module.params['tenant_name']
     host = socket.gethostbyname(module.params['host'])
     bd_name = module.params['bd_name']
+    l3_out = module.params['l3_out']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
 
-    # DHCP Relay Labels
-    dhcp_name = module.params['dhcp_name']
-    dhcp_scope = module.params['dhcp_scope']
-
     post_uri = 'api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name + '.json'
-    get_uri = 'api/node/class/dhcpLbl.json'
+    get_uri = 'api/node/class/fvRsBDToOut.json'
+    delete_uri = '/api/mo/uni/tn-' +tenant_name+ '/BD-' + bd_name + '/rsBDToOut-' +l3_out+ '.json'
 
     config_data = {
-        "fvBD": {
-            "attributes": {
-                "name": bd_name
-            },
-            "children": [
-                {
-                    "dhcpLbl": {
-                        "attributes": {
-                            "name": dhcp_name,
-                            "owner": dhcp_scope
-                        }
-                    }
-                }
-            ]
-
+    "fvRsBDToOut":{
+       "attributes":{
+          "tnL3extOutName":l3_out
+             }
         }
     }
-
 
     payload_data = json.dumps(config_data)
 
@@ -168,15 +149,19 @@ def main():
     if get_uri.startswith('/'):
         get_uri = get_uri[1:]
     get_url = apic + get_uri
-  
+
+    if delete_uri.startswith('/'):
+        delete_uri = delete_uri[1:]
+    delete_url = apic + delete_uri
+
     bd_get = apic + '/api/class/fvBD.json'
     if action == 'post':
        get_bd = requests.get(bd_get, cookies=authenticate.cookies,
-                           data=payload_data, verify=False) 
+                           data=payload_data, verify=False)
        data =json.loads(get_bd.text)
        count = data['totalCount']
        count = int(count)
-       bridge_domain_list = []    
+       bridge_domain_list = []
        if get_bd.status_code == 200:
           for name in range(0,count):
               bd = data['imdata'][name]['fvBD']['attributes']['name']
@@ -184,11 +169,15 @@ def main():
        if bd_name in bridge_domain_list:
           req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
        else:
-           module.fail_json(msg='Bridge Domain doesnt exist. Please create bridge domain before creating DHCP Relay Label')
-       
-    else:
+           module.fail_json(msg='Bridge Domain doesnt exist. Please create bridge domain before associating with L3 out')
+
+    elif action == 'get':
        req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+
+    elif action == 'delete':
+        req = requests.delete(delete_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+    
 
     response = req.text
     status = req.status_code
@@ -212,7 +201,5 @@ def main():
 
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

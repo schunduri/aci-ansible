@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_login_domain
+module: aci_span_dst_group
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,24 +11,32 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
+    - Tenant should already exist
 options:
     action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
-    login_domain:
+    tenant_name:
         description:
-            - Domain name
+            - Tenant Name
+        required: true
+        default: null
+        choices: []
+        aliases: []
+    dst_group:
+        description:
+            - Span destination group name
         required: true
         default: null
         choices: []
         aliases: []
     descr:
         description:
-            - Description for Login Domain
+            - Description for Span destination group
         required: false
         default: null
         choices: []
@@ -65,13 +73,14 @@ options:
 
 EXAMPLES =  '''
 
-    aci_login_domain:
-        action: "{{ action }}"
-        login_domain: "{{ login_domain }}"
-        descr: "{{ descr }}"
-        host: "{{ inventory_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
+    aci_span_dst_group: 
+        action:"{{ action }}" 
+        tenant_name:"{{ tenant_name }}" 
+	dst_group:"{{ dst_group }}" 
+ 	descr:"{{ descr }}" 
+	host:"{{ inventory_hostname }}" 
+	username:"{{ username }}"
+	password:"{{ password }}"
 	protocol: "{{ protocol }}"
 
 '''
@@ -87,8 +96,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=False),
-            login_domain=dict(type='str'),
+            action=dict(choices=['get', 'post', 'delete'], required=False),
+            dst_group=dict(type='str'),
+            tenant_name=dict(type='str'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -104,27 +114,22 @@ def main():
     protocol = module.params['protocol']
     action = module.params['action']
     
-    login_domain = module.params['login_domain']
+
+    dst_group = module.params['dst_group']
+    tenant_name = module.params['tenant_name'] 
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/userext/logindomain-'  + login_domain + '.json'
-    get_uri = '/api/node/class/aaaLoginDomain.json'
+    post_uri = '/api/mo/uni/tn-' + tenant_name +  '/destgrp-' + dst_group + '.json'
+    get_uri = '/api/node/class/spanDestGrp.json'
 
     config_data = {
-       "aaaLoginDomain": {
-		"attributes": {
-		    "descr": descr,
-	            "name": login_domain
-		},
-		 "children": [{
-		      "aaaDomainAuth": {
-		            "attributes": {
-				"realm": "local"
-					}
-				}
-			}]
-       	}
+      "spanDestGrp": {
+        "attributes": {
+          "descr": descr,
+          "name": dst_group
+        }
+      }  
     } 
     payload_data = json.dumps(config_data)
 
@@ -156,7 +161,9 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
-
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+   
     response = req.text
     status = req.status_code
 
@@ -178,7 +185,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

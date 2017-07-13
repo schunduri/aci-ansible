@@ -38,10 +38,10 @@ options:
         aliases: []
     action:
         description:
-            - http verb, i.e. post or get
+            - http verb, i.e. post, get, delete
         required: true
         default: null
-        choices: ['post', 'get']
+        choices: ['post', 'get', 'delete']
         aliases: []
     config_file:
         description:
@@ -103,7 +103,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             uri=dict(type='str', required=True),
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['post', 'get','delete']),
             config_file=dict(),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -159,7 +159,8 @@ def main():
     elif action == 'get':
         req = requests.get(url, cookies=authenticate.cookies,
                            data=config, verify=False)
-
+    elif action == 'delete':
+        req = requests.delete(url, cookies=authenticate.cookies,  data=config, verify=False)
     response = req.text
     status = req.status_code
 
@@ -181,7 +182,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_l3Out
+module: aci_lldp_interface_policy
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,54 +11,64 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
-    - Tenant should already exist
 options:
-	action:
-		description:
-			- post or get
-   tenant_name:
+   action:
         description:
-            - Tenant Name
+            - post, get, or delete
+        required: true
+        default: null
+        choices: ['post','get', 'delete']
+        aliases: []
+   lldp_policy:
+        description:
+            - LLDP Interface Policy name
         required: true
         default: null
         choices: []
         aliases: []
-   bd_name:
+    receive_state:
         description:
-            - Bridge Domain
-        required: true
+            - Enable or Disable Receive state 
+        required: false
+        default: 'enabled'
+        choices: ['enabled','disabled']
+        aliases: []
+    transmit_state:
+        description:
+            - Enable or Disable Transmit state
+        required: false
+        default: 'enabled'
+        choices: ['enabled','disabled']
+        aliases: []
+    descr:
+	description:
+            - Description for the LLDP interface policy
+        required: false
         default: null
         choices: []
         aliases: []
-   l3_out:
-        description:
-            - Name of the External routed network (L3Out) to associate
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   host:
+    host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
         default: null
         choices: []
         aliases: []
-   username:
+    username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
         choices: []
         aliases: []
-   password:
+    password:
         description:
             - Password used to login to the switch
         required: true
-        default: 'C1sco12345'
+        default: null
         choices: []
         aliases: []
-   protocol:
+    protocol:
         description:
             - Dictates connection protocol to use
         required: false
@@ -67,18 +77,18 @@ options:
         aliases: []
 '''
 
-EXAMPLES = '''
+EXAMPLES =  '''
 
- aci_l3Out:
-     action: "{{ action }}"
-     tenant_name: "{{ tenant_name }}" 
-     bd_name: "{{ bd_name }}" 
-     l3_out: "{{ l3_out }}"
-     host: "{{ inventory_hostname }}"
-     username: "{{ username }}"
-     password: "{{ password }}"
-     protocol: "{{ protocol }}"
-
+    aci_lldp_interface_policy: 
+        action: "{{ action }}"
+        lldp_policy: "{{ lldp_policy }}"
+        receive_state: "{{ receive_state }}"
+        transmit_state: "{{ transmit_state }}"
+        descr: "{{ descr }}" 
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
@@ -88,45 +98,55 @@ import requests
 
 
 def main():
+    
     ''' Ansible module to take all the parameter values from the playbook '''
 
-    module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post'], required=False),
-        tenant_name=dict(type='str', required=True),
-        bd_name=dict(type='str', required=True),
-        l3_out=dict(type='str', required=True),
-        host=dict(required=True),
-        username=dict(type='str', default='admin'),
-        password=dict(type='str', default='Cisco!123'),
-        protocol=dict(choices=['http', 'https'], default='https'),
-    ), supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=dict(
+            action=dict(choices=['get', 'post', 'delete']),
+            lldp_policy=dict(type='str'),
+            receive_state=dict(choices=['enabled','disabled'], default='enabled'),
+            transmit_state=dict(choices=['enabled','disabled'], default='enabled'),
+            descr=dict(type='str',required=False),       
+            host=dict(required=True),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+        ), 
+        supports_check_mode=False
+    )
 
-    tenant_name = module.params['tenant_name']
     host = socket.gethostbyname(module.params['host'])
-    bd_name = module.params['bd_name']
-    l3_out = module.params['l3_out']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
 
-    post_uri = 'api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name + '.json'
-    get_uri = 'api/node/class/fvRsBDToOut.json'
+    lldp_policy = module.params['lldp_policy']
+    receive_state = module.params['receive_state']
+    transmit_state = module.params['transmit_state'] 
+    descr = module.params['descr']
+    descr=str(descr)
+
+    post_uri = '/api/mo/uni/infra/lldpIfP-'  + lldp_policy + '.json'
+    get_uri = '/api/node/class/lldpIfPol.json'
 
     config_data = {
-    "fvRsBDToOut":{
-       "attributes":{
-          "tnL3extOutName":l3_out
-             }
-        }
-    }
-
+       "lldpIfPol": {
+	"attributes": {
+	     "adminRxSt": receive_state,
+	     "adminTxSt": transmit_state,
+	     "descr": descr,
+	     "name": lldp_policy
+         	}
+            }
+       } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
 
     auth = dict(aaaUser=dict(attributes=dict(name=username,
-                                             pwd=password)))
+                pwd=password)))
     url = apic + 'api/aaaLogin.json'
 
     authenticate = requests.post(url, data=json.dumps(auth), timeout=2,
@@ -145,26 +165,14 @@ def main():
         get_uri = get_uri[1:]
     get_url = apic + get_uri
 
-    bd_get = apic + '/api/class/fvBD.json'
     if action == 'post':
-       get_bd = requests.get(bd_get, cookies=authenticate.cookies,
+        req = requests.post(post_url, cookies=authenticate.cookies,
+                            data=payload_data, verify=False)
+    elif action == 'get':
+        req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
-       data =json.loads(get_bd.text)
-       count = data['totalCount']
-       count = int(count)
-       bridge_domain_list = []
-       if get_bd.status_code == 200:
-          for name in range(0,count):
-              bd = data['imdata'][name]['fvBD']['attributes']['name']
-              bridge_domain_list.append(bd)
-       if bd_name in bridge_domain_list:
-          req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-       else:
-           module.fail_json(msg='Bridge Domain doesnt exist. Please create bridge domain before associating with L3 out')
-
-    else:
-       req = requests.get(get_url, cookies=authenticate.cookies,
-                           data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -176,7 +184,7 @@ def main():
         else:
             changed = False
     else:
-        module.fail_json(msg=response,
+        module.fail_json(msg='error issuing api request',
                          response=response, status=status)
 
     results = {}
@@ -186,11 +194,6 @@ def main():
 
     module.exit_json(**results)
 
-
 from ansible.module_utils.basic import *
-
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass
-

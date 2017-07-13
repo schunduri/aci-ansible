@@ -60,7 +60,7 @@ Offers ability to manage private networks. Each context is a private network ass
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   no  |    | <ul>  </ul> | IP Address or hostname of APIC resolvable by Ansible control host |
 | protocol  |   yes  | https | <ul><li>http</li>  <li>https</li></ul> |  Dictates connection protocol |
-| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  unspecified  | <ul></ul> |  Name of the Tenant  |
 | vrf_name  |   yes |  | <ul></ul> |  Name of the Context  |
 | policy_control_direction  |   no  | ingress | <ul> <li>ingress</li>  <li>egress</li> </ul> |  The preferred policy control in relation to where the policy will be applied  |
@@ -112,7 +112,7 @@ Manages top level filter objects
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | host | yes | |<ul></ul> | IP Address or hostname of APIC resolvable by Ansible control host |
-| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of |
 | entry_name | yes | | <ul></ul> | name of the filter entry  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part of |
@@ -160,7 +160,7 @@ Manages filter entries that will be assigned to an already created filter
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | host | yes | |<ul></ul> | IP Address or hostname of APIC resolvable by Ansible control host |
-| action | yes   |  | <ul> <li>post</li> <li>get</li> </ul>| Http verbs, i.e. Get or Post|
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | filter_name  |   yes  |  | <ul></ul> | name of the filter the entry will be a part of  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of the tenant this filter will be a part  |
 | entry_name | yes | | <ul></ul> | name of the entry |
@@ -210,7 +210,7 @@ Manages bridge domains in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
 | vrf_name | yes | | <ul></ul> | Name of the context the bridge domain will be associated to |
@@ -275,7 +275,7 @@ Associating DHCP Relay Labels to Bridge Domains
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
 | dhcp_name | yes | | <ul></ul> | Name  of the DHCP Relay Label |
@@ -321,7 +321,7 @@ Associating L3 Out to Bridge Domains
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs, i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | bd_name  |   yes  |  | <ul></ul> |  Name of the bridge domain  |
 | tenant_name | yes | | <ul></ul> | Name of the Tenant the bridge domain will be a part of |
 | l3_out | yes | | <ul></ul> | L3 out association with the Bridge Domain |
@@ -368,7 +368,7 @@ Manages initial contracts (does not include contract subjs)
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li> </ul> | Http verbs, i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | contract_name  |   yes  |  | <ul></ul> |  Name of the contract  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of tenant this contract will be part of  |
 | priority |   no  | unspecified | <ul> <li>unspecified</li>  <li>level1</li>  <li>level2</li>  <li>level3</li> </ul> |  priority (qosclass) of contract  |
@@ -420,7 +420,7 @@ Manages initial contracts subjects
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li> </ul> | Http verbs, i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | subject_name | yes | | <ul></ul> | Contract Subject name |
 | contract_name  |   yes  |  | <ul></ul> |  Name of the contract which will contain the subject  |
 | tenant_name  |   yes  |  | <ul></ul> |  name of tenant this contract  will be part of  |
@@ -477,7 +477,7 @@ Manage tenants in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  | <ul></ul> |  Name of tenant  |
 | descr  |   no  |  | <ul></ul> |  description of tenant  |
 
@@ -516,7 +516,7 @@ Manage application network profile in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  | <ul></ul> |  Name of tenant the Application profile will be a part of |
 | app_profile_name | yes | | <ul></ul> | Name of the Application profile |
 | descr  |   no  |  | <ul></ul> |  description of applciation profile  |
@@ -560,7 +560,7 @@ Manage end point groups in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  | <ul></ul> |  Name of tenant the Application profile will be a part of |
 | app_profile_name | yes | | <ul></ul> | Name of the Application profile the EPG will be a part of |
 | epg_name | yes | | <ul></ul> | Name of the end point group |
@@ -626,7 +626,7 @@ Manage end point retention policy
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  | <ul></ul> |  Name of tenant the policy will be a part of |
 | epr_name | yes | | <ul></ul> | Name of the End point retention policy |
 | descr  |   no  |  | <ul></ul> |  description of EPR |
@@ -679,7 +679,7 @@ Manage fiber channel policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | fc_policy  |   yes  |  | <ul></ul> |  Name of fiber channel policy|
 | port_mode | no | f | <ul><li>f</li><li>np</li> </ul> | Port Mode |
 | descr  |   no  |  | <ul></ul> |  description of fiber channel policy |
@@ -718,7 +718,7 @@ Manage L2 Interface Policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | l2_policy  |   yes  |  | <ul></ul> |  Name of L2 interface policy|
 | vlan_scope | no | gloabl | <ul><li>global</li><li>portlocal</li> </ul> | Scope of VLAN |
 | descr  |   no  |  | <ul></ul> |  description of L2 interface policy |
@@ -756,7 +756,7 @@ Manage LLDP Interface Policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | lldp_policy  |   yes  |  | <ul></ul> |  Name of LLDP interface policy|
 | receive_state | no | enabled | <ul><li>enabled</li><li>disabled</li> </ul> | Receive State |
 | transmit_state | no | enabled | <ul><li>enabled</li><li>disabled</li> </ul> | Transmit State |
@@ -797,7 +797,7 @@ Manage Login Domain for an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | login_domain  |   yes  |  | <ul></ul> |  Name of Login Domain|
 | descr  |   no  |  | <ul></ul> |  description of login domain |
 
@@ -834,7 +834,7 @@ Manage monitoring policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  |   yes  |  | <ul></ul> |  Name of tenant , the monitoring policy will be a part of |
 | monitoring_policy | yes |  | <ul></ul> | Name of the monitoring policy | 
 | descr  |   no  |  | <ul></ul> |  description of Monitoring policy |
@@ -878,7 +878,7 @@ Manage MCP Interface policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | mcp_interface  |   yes  |  | <ul></ul> |  Name of MCP interface policy|
 | descr  |   no  |  | <ul></ul> |  description of MCP Interface policy |
 | admin_state | no | enabled | <ul><li>enabled</li> <li>disabled</li></ul> | Enable or Disable admin state | 
@@ -917,7 +917,7 @@ Manage Port Channel Interface in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | port_channel  |   yes  |  | <ul></ul> |  Name of the port channel interface |
 | max_link | no | 16 | <ul></ul> | Maximum number of links [1-16] | 
 | min_link | no | 1 | <ul></ul> | Mininum number of links [1-16] |
@@ -961,7 +961,7 @@ Manage Port Security in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | port_security  |   yes  |  | <ul></ul> |  Name of the port security|
 | max_end_points | no | 0 | <ul></ul> | Maximum number of end points allowed [0-12000] | 
 | descr  |   no  |  | <ul></ul> |  description of Port Security |
@@ -1001,7 +1001,7 @@ Manage Route Tag Policy in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> |  Name of the tenant, the RTP will be a part of |
 | rtp_name | yes|  | <ul></ul> | Name of the Route Tag Policy  | 
 | tag | no | 4294967295 | <ul></ul> | Tag for Route Tag Policy |
@@ -1044,7 +1044,7 @@ Manage SPAN Destination Group in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> |  Name of the tenant, the SPAN destination group will be a part of |
 | dst_group | yes|  | <ul></ul> | Name of the SPAN Destination Group  | 
 | descr  |   no  |  | <ul></ul> |  description of SPAN Destination Group |
@@ -1085,7 +1085,7 @@ Manage SPAN Source Group in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> |  Name of the tenant, the SPAN source group will be a part of |
 | src_group | yes |  | <ul></ul> | Name of the SPAN Source Group |
 | dst_group | yes|  | <ul></ul> | Name of the SPAN Destination Group  | 
@@ -1130,7 +1130,7 @@ Manage Taboo Contracts in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> |  Name of the tenant, the Taboo Contract will be a part of |
 | taboo_contract | yes |  | <ul></ul> | Name of the Taboo Contract |
 | descr  |   no  |  | <ul></ul> |  description of Taboo Contract |
@@ -1170,7 +1170,7 @@ Manage Action Rule Profile in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> |  Name of the tenant, the action rule profile will be a part of |
 | action_rule_name | yes |  | <ul></ul> | Name of the Action Rule Profile |
 | descr  |   no  |  | <ul></ul> |  description of Action Rule Profile |
@@ -1210,7 +1210,7 @@ Manage Attachable Entity Profile in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | aep_name | yes |  | <ul></ul> | Name of the Attachable Entity Profile |
 | descr  |   no  |  | <ul></ul> |  description of Attachable Entity Profile |
 
@@ -1246,7 +1246,7 @@ Manage Physical domain binding to EPGs in an ACI fabric
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action | yes | | <ul><li>Post</li> <li>Get</li></ul> | Http verbs i.e. Get or Post |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | tenant_name  | yes |  | <ul></ul> | Name of the tenant, the EPG is a part of |
 | app_profile_name | yes | <ul></ul> | Name of the Application profile that contains the EPG |
 | epg_name | yes |  | <ul></ul> | Name of the EPG to which the Physical Domain will be associated |
@@ -1295,7 +1295,7 @@ Direct access to the APIC API
 | config_file  |   no  |  | <ul></ul> |  name of the absolute path of the filname that includes the body of the http request being sent to the ACI fabric  |
 | uri  |   yes  |  | <ul></ul> |  uri being used to execute API calls. Must end in .xml or .json  |
 | host  |   yes  |  | <ul></ul> |  IP Address or hostname of APIC resolvable by Ansible control host  |
-| action  |   yes  |  | <ul> <li>post</li>  <li>get</li> </ul> |  http verb, i.e. post or get  |
+| action | yes   |  | <ul> <li>post</li> <li>get</li> <li>delete</li></ul>| Http verbs, i.e. Get, Post, or Delete|
 | protocol  |   no  |  https  | <ul> <li>http</li>  <li>https</li> </ul> |  Dictates connection protocol to use  |
 | password  |   yes  |    | <ul></ul> |  Password used to login to the switch  |
 

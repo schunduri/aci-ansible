@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_lldp_interface_policy
+module: aci_action_rule_profile
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,38 +11,32 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
+    - Tenant should already exist
 options:
-   action:
+    action:
+	description:
+	    - post, get or delete
+	required: true
+	default: null
+	choices: ['post', 'get','delete']
+	aliases: []
+    tenant_name:
         description:
-            - post or get
-        required: true
-        default: null
-        choices: ['post','get']
-        aliases: []
-   lldp_policy:
-        description:
-            - LLDP Interface Policy name
+            - Tenant Name
         required: true
         default: null
         choices: []
         aliases: []
-    receive_state:
+    action_rule_name:
         description:
-            - Enable or Disable Receive state 
-        required: false
-        default: 'enabled'
-        choices: ['enabled','disabled']
-        aliases: []
-    transmit_state:
-        description:
-            - Enable or Disable Transmit state
-        required: false
-        default: 'enabled'
-        choices: ['enabled','disabled']
+            - Action Rule Profile Name
+        required: true
+        default: null
+        choices: []
         aliases: []
     descr:
 	description:
-            - Description for the LLDP interface policy
+            - Description for the action rule profile
         required: false
         default: null
         choices: []
@@ -79,16 +73,15 @@ options:
 
 EXAMPLES =  '''
 
-    aci_lldp_interface_policy: 
-        action: "{{ action }}"
-        lldp_policy: "{{ lldp_policy }}"
-        receive_state: "{{ receive_state }}"
-        transmit_state: "{{ transmit_state }}"
-        descr: "{{ descr }}" 
-        host: "{{ inventory_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
-	protocol: "{{ protocol }}"
+     aci_action_rule_profile:
+         action: "{{ action }}"
+         tenant_name: "{{ tenant_name }}" 
+         action_rule_name: "{{ action_rule_name }}"
+         descr: "{{ descr }}"  
+         host: "{{ inventory_hostname }}"
+         username: "{{ username }}" 
+         password: "{{ password }}"
+	 protocol: "{{ protocol }}"
 
 '''
 
@@ -98,49 +91,43 @@ import requests
 
 
 def main():
-    
     ''' Ansible module to take all the parameter values from the playbook '''
 
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=False),
-            lldp_policy=dict(type='str'),
-            receive_state=dict(choices=['enabled','disabled'], default='enabled'),
-            transmit_state=dict(choices=['enabled','disabled'], default='enabled'),
-            descr=dict(type='str',required=False),       
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-        ), 
-        supports_check_mode=False
-    )
+    module = AnsibleModule(argument_spec=dict(
+        action=dict(choices=['get', 'post','delete']),
+        tenant_name=dict(type='str', required=True),
+        action_rule_name=dict(type='str', required=True),
+        descr=dict(type='str'),
+        host=dict(required=True),
+        username=dict(type='str', default='admin'),
+        password=dict(type='str'),
+        protocol=dict(choices=['http', 'https'], default='https'),
+        ), supports_check_mode=False)
 
+
+    tenant_name = module.params['tenant_name']
+    action_rule_name = module.params['action_rule_name']
+    descr = module.params['descr']
+    descr=str(descr)
     host = socket.gethostbyname(module.params['host'])
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
 
-    lldp_policy = module.params['lldp_policy']
-    receive_state = module.params['receive_state']
-    transmit_state = module.params['transmit_state'] 
-    descr = module.params['descr']
-    descr=str(descr)
-
-    post_uri = '/api/mo/uni/infra/lldpIfP-'  + lldp_policy + '.json'
-    get_uri = '/api/node/class/lldpIfPol.json'
+    post_uri = '/api/mo/uni/tn-' + tenant_name + '/attr-' + action_rule_name + '.json'
+    get_uri = 'api/node/class/rtctrlAttrP.json'
 
     config_data = {
-       "lldpIfPol": {
-	"attributes": {
-	     "adminRxSt": receive_state,
-	     "adminTxSt": transmit_state,
-	     "descr": descr,
-	     "name": lldp_policy
-         	}
-            }
-       } 
+        "rtctrlAttrP": {
+                "attributes": {
+                       "descr": descr,
+                       "name": action_rule_name
+                    }
+              }
+
+         }
+     
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -168,6 +155,10 @@ def main():
     if action == 'post':
         req = requests.post(post_url, cookies=authenticate.cookies,
                             data=payload_data, verify=False)
+
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+   
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
@@ -193,7 +184,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

@@ -16,10 +16,10 @@ notes:
 options:
     action:
         description:
-            - http verb, i.e. post or get
+            -  post, get, or delete
         required: true
         default: null
-        choices: ['post', 'get']
+        choices: ['post', 'get', 'delete']
         aliases: []
     tenant_name:
         description:
@@ -168,7 +168,7 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['post', 'get', 'delete' ]),
             tenant_name=dict(type='str', required=True),
             app_profile_name=dict(type='str', required=True),
             epg_name=dict(type='str', required=True),
@@ -261,6 +261,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False) 
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
     
     ''' Check response status and parse it for status || Throw an error otherwise '''
     response = req.text
@@ -284,7 +286,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

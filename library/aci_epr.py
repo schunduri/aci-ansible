@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_monitoring_policy
+module: aci_epr
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -15,10 +15,10 @@ notes:
 options:
     action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
     tenant_name:
         description:
@@ -27,18 +27,53 @@ options:
         default: null
         choices: []
         aliases: []
-    monitoring_policy:
+    epr_name:
         description:
-            - Monitoring Policy name
+            - End point retention policy name
         required: true
         default: null
         choices: []
         aliases: []
+    bounce_age:
+        description:
+            - Bounce Entry Aging Interval (range 150secs - 65535secs)
+        required: true
+        default: 630
+        choices: []
+        aliases: []
+    hold_interval:
+        description:
+            - Hold Interval (range 5secs - 65535secs)
+        required: true
+        default: 300
+        choices: []
+        aliases: []
+    local_ep_interval:
+        description:
+            - Local end point Aging Interval (range 120secs - 65535secs)
+        required: true
+        default: 900
+        choices: []
+        aliases: []
+    remote_ep_interval:
+        description:
+            - Remote end point Aging Interval (range 120secs - 65535secs)
+        required: true
+        default: 300
+        choices: []
+        aliases: []
+     move_frequency:
+        description:
+            - Move frequency per second (range 0secs - 65535secs)
+        required: true
+        default: 256
+        choices: []
+        aliases: []
     descr:
         description:
-            - Description for monitoring policy
+	    - Description for the End point rentention policy
         required: false
-        default: null
+        default: null 
         choices: []
         aliases: []
     host:
@@ -73,13 +108,18 @@ options:
 
 EXAMPLES =  '''
 
-    aci_monitoring_policy:
+    aci_epr:
         action: "{{ action }}"
         tenant_name: "{{ tenant_name }}"
-	monitoring_policy: "{{ monitoring_policy }}"
+        epr_name: "{{ epr_name }}"
+        bounce_age: "{{ bounce_age }}"
+        hold_interval: "{{ hold_interval }}"
+        local_ep_interval: "{{ local_ep_interval }}"
+        remote_ep_interval: "{{ remote_ep_interval }}"
+        move_frequency: "{{ move_frequency }}"
         descr: "{{ descr }}"
-        host= "{{ inventory_hostname }}"
-        username: "{{ username }}"
+        host: "{{ inventory_hostname }}"
+        username: "{{ username }}" 
         password: "{{ password }}"
 	protocol: "{{ protocol }}"
 
@@ -96,10 +136,15 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post']),
-            tenant_name=dict(type='str'),
-            monitoring_policy=dict(type='str'),
-            descr=dict(type='str',required=False),       
+            action=dict(choices=['get', 'post', 'delete'], required=False),
+            tenant_name=dict(type='str', required = True),
+            epr_name=dict(type='str', required = True),
+            bounce_age=dict(type='int', default = '630'),
+            hold_interval=dict(type='int', default = '300'),
+            local_ep_interval=dict(type='int', default = '900'),
+            remote_ep_interval=dict(type='int', default = '300'),
+            descr=dict(type='str'),
+            move_frequency=dict(type='int', default = '256'),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
@@ -113,25 +158,39 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-    
-    
-    tenant_name = module.params['tenant_name']
-    monitoring_policy = module.params['monitoring_policy']
-    descr = module.params['descr']
-    descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' +tenant_name + '/monepg-'  + monitoring_policy + '.json'
-    get_uri = '/api/node/class/monEPGPol.json'
+    tenant_name = module.params['tenant_name'] 
+    epr_name = module.params['epr_name']
+    bounce_age = module.params['bounce_age']
+    bounce_age = str(bounce_age)
+    descr = module.params['descr']
+    descr =str(descr)
+    hold_interval= module.params['hold_interval']
+    hold_interval = str(hold_interval)
+    local_ep_interval = module.params['local_ep_interval']
+    local_ep_interval = str(local_ep_interval)
+    move_frequency= module.params['move_frequency']
+    move_frequency = str(move_frequency)
+    remote_ep_interval = module.params['remote_ep_interval']
+    remote_ep_interval = str(remote_ep_interval)
+
+    post_uri = '/api/node/mo/uni/tn-'+ tenant_name + '/epRPol-' +epr_name+ '.json'
+    get_uri = '/api/node/class/fvEpRetPol.json'
 
     config_data = {
-         "monEPGPol": {
-             "attributes": {
-                "descr": descr,
-                "name": monitoring_policy
-               }
-         } 
+       "fvEpRetPol": {
+       "attributes": {
+         "bounceAgeIntvl": bounce_age,
+         "descr": descr,
+         "holdIntvl": hold_interval,
+         "localEpAgeIntvl": local_ep_interval,
+         "moveFreq": move_frequency,
+         "name": epr_name,        
+         "remoteEpAgeIntvl": remote_ep_interval
 
-     } 
+         }
+      }
+    } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -162,6 +221,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -184,7 +245,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

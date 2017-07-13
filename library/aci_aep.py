@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_port_security
+module: aci_aep
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -13,29 +13,22 @@ requirements:
 notes:
 options:
     action:
+	description:
+	    - post or get
+	required: true
+	default: null
+	choices: ['post', 'get']
+	aliases: []
+    aep_name:
         description:
-            - post or get
+            - AEP Name
         required: true
         default: null
-        choices: ['post','get']
-        aliases: []
-    port_security:
-        description:
-            - Port Security name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    max_end_points:
-        description:
-            - Maximum number of end points (range 0-12000) 
-        required: false
-        default: '0'
         choices: []
         aliases: []
     descr:
         description:
-            - Description for Port Security
+            - Description for the AEP
         required: false
         default: null
         choices: []
@@ -72,15 +65,15 @@ options:
 
 EXAMPLES =  '''
 
-    aci_port_security:
-        action: "{{ action }}"
-        port_security: "{{ port_security }}"
-        max_end_points: "{{ max_end_points }}"
-        descr: "{{ descr }}"
-        host: "{{ inventory_hostname }}"
-        username: "{{ username }}" 
-        password: "{{ password }}"
-	protocol: "{{ protocol }}"
+     aci_aep:
+         action: "{{ action }}"  
+         aep_name: "{{ aep_name }}" 
+         descr: "{{ descr }}" 
+         host: "{{ inventory_hostname }}"
+         username: "{{ username }}"
+         password: "{{ password }}"
+         protocol: "{{ protocol }}"
+
 '''
 
 import socket
@@ -90,14 +83,12 @@ import requests
 
 def main():
     
-    
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(
         argument_spec=dict(
             action=dict(choices=['get', 'post']),
-            port_security=dict(type='str'),        
-            max_end_points=dict(type='str', default='0'),
+            aep_name=dict(type='str'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -112,25 +103,22 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-    
-    port_security = module.params['port_security']
-    max_end_points = module.params['max_end_points']
+ 
+    aep_name = module.params['aep_name']
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/infra/portsecurityP-'  +port_security + '.json'
-    get_uri = '/api/node/class/l2PortSecurityPol.json'
+    post_uri = 'api/mo/uni/infra/attentp-'  + aep_name + '.json'
+    get_uri = 'api/node/class/infraAttEntityP.json'
 
     config_data = {
-      "l2PortSecurityPol": {
-	"attributes": {
-	    "descr": descr,
-	    "maximum": max_end_points,
-	    "name": port_security,
-	    "violation": "protect"
-	     }
-          }
-      } 
+	"infraAttEntityP": {
+	     "attributes": {
+	        "descr": descr,
+		"name": aep_name
+	      }
+	 }
+    } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -183,7 +171,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

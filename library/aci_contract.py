@@ -1,50 +1,57 @@
 #!/usr/bin/python
 DOCUMENTATION = '''
----
 
-module: aci_filter_entry
-short_description: Manages filter entries that will be assigned to a filter
+module: aci_contract
+short_description: Manages initial contracts (does not include contract subjs)
 description:
-    -  Manages filter entries that will be assigned to an already created filter
+    -  Manages contract resource, but does not include subjects although
+        subjects can be removed using this module
 author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must be exist prior to using this module
 options:
-   action:
+    action:
         description:
-            - post or get
+            - post, get, delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get','delete']
         aliases: []
-   tenant_name:
+    tenant_name:
         description:
             - Tenant Name
         required: true
         default: null
         choices: []
         aliases: []
-   entry_name:
+   contract_name:
         description:
-            - Filter Entry Name
+            -Contract Name
         required: true
         default: null
         choices: []
         aliases: []
-   ether_type:
+   scope:
         description:
-            - Ether Type 
-        required:false
-        default: ip
-        choices: []
+            -The scope of a service contract
+        required: true
+        default: 'context'
+        choices: ['context','application-profile','tenant','global']
         aliases: []
-   icmp_msg_type:
+   priority:
         description:
-            - ICMP Message type v4
+            - Qos class 
+        required: false
+        default: unspecified
+        choices: [ 'unspecified','level1','level2','level3']
+        aliases: []
+   target:
+        description:
+            - Target DSCP
         required:false
         default: unspecified
-        choices: ['echo','echo-rep','dst-unreach','unspecified']
+        choices: []
         aliases: []
     descr:
         description:
@@ -85,13 +92,13 @@ options:
 
 EXAMPLES = '''
 
-    aci_filter_entry:
+    aci_contract:
        action: "{{ action }}"
-       entry_name: "{{ entry_name }}"
+       contract_name: "{{ contract_name }}"
        tenant_name: "{{ tenant_name }}"
-       ether_name: "{{  ether_name }}"
-       icmp_msg_type: "{{ icmp_msg_type }}"
-       filter_name: "{{ filter_name }}"
+       priority: "{{ priority }}"
+       scope: "{{ scope }}"
+       target: "{{ target }}"
        descr: "{{ descr }}"
        host: "{{ inventory_hostname }}"
        username: "{{ user }}"
@@ -99,7 +106,6 @@ EXAMPLES = '''
        protocol: "{{ protocol }}"
 
 '''
-
 import socket
 import json
 import requests
@@ -109,48 +115,38 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['post', 'get','delete']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-            entry_name=dict(type="str", required=True),
-            ether_type=dict(type="str", required=False, default='unspecified'),
-            filter_name=dict(type="str", required=True),
-            icmp_msg_type=dict(choices=['echo','echo-rep','dst-unreach','unspecified'], default='unspecified'),
-            tenant_name=dict(type="str", required=True),
+            contract_name=dict(type="str", required=False),
+            tenant_name=dict(type="str", required=False),
+            priority=dict(choices=['unspecified','level1','level2','level3'],default='unspecified'),
+            scope=dict(choices=['context','application-profile','tenant','global'],default='context'),
+            target=dict(type="str", required=False, default='unspecified'),
             descr=dict(type="str", required=False),
         ),
         supports_check_mode=False
     )
 
-    entry_name=module.params['entry_name']
-    ether_type=module.params['ether_type']
+    contract_name=module.params['contract_name']
     tenant_name=module.params['tenant_name']
+    priority=module.params['priority']
+    scope=module.params['scope']
+    target=module.params['target']
     descr=module.params['descr']
     descr=str(descr)
-    filter_name=module.params['filter_name']
-    icmp_msg_type=module.params['icmp_msg_type']
     username = module.params['username']
     password = module.params['password']
     protocol = module.params['protocol']
     host = socket.gethostbyname(module.params['host'])
     action = module.params['action']
-
-    post_uri ='api/node/mo/uni/tn-'+tenant_name+'/flt-'+filter_name+ '.json'
-    get_uri = 'api/node/class/vzEntry.json'
+    post_uri ='api/mo/uni/tn-'+tenant_name+'/brc-'+contract_name+'.json'
+    get_uri = 'api/node/class/vzBrCP.json'
 
     ''' Config payload to enable the physical interface '''
-    config_data = {
-        "vzEntry": {
-           "attributes": {
-              "etherT": ether_type,
-              "name": entry_name, 
-              "descr":descr,
-              "icmpv4T": icmp_msg_type
-              }
-            }
-        }
+    config_data = {"vzBrCP":{"attributes":{"name":contract_name, "prio":priority,"scope":scope,"targetDscp":target, "descr":descr}}}
     payload_data = json.dumps(config_data)
 
     ''' authentication || || Throw an error otherwise'''
@@ -173,6 +169,9 @@ def main():
 
     if action == 'post':
         req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
@@ -198,7 +197,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

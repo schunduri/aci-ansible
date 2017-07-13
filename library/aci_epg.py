@@ -167,7 +167,7 @@ def main():
     ''' Ansible module to take all the parameter values from the playbook '''
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['post', 'get']),
+            action=dict(choices=['post', 'get', 'delete']),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
@@ -353,6 +353,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
     ''' Check response status and parse it for status || Throw an error otherwise '''
     response = req.text
     status = req.status_code
@@ -374,9 +376,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass
-
-

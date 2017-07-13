@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_port_channel_interface
+module: aci_route_tag_policy
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -11,49 +11,43 @@ author: Cisco
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
+    - Tenant should already exist
 options:
-   action:
+    action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
-   port_channel:
+    tenant_name:
         description:
-            - Port Channel name
+            - Tenant Name
         required: true
         default: null
         choices: []
         aliases: []
-    max_link:
+    rtp_name:
         description:
-            - Maximum Links (range 1-16)
-        required: false
-        default: '16'
+            - Route Tag Policy name
+        required: true
+        default: null
         choices: []
         aliases: []
-    min_link:
+    tag:
         description:
-            - Minimum Links (range 1-16)
+            - Tag value (range 0-4294967295)
         required: false
-        default: '1'
+        default: '4294967295'
         choices: []
-        aliases: []
-    mode:
-	description: 
-	    - Port channel interface policy mode
-        required: false
-        default: 'off'
-        choices: ['off','mac-pin','active','passive','mac-pin-nicload']
         aliases: []
     descr:
-        description:
-            - Description for Port Channel Interfaces
+	description:
+	    - Description for Route Tag Policy
         required: false
-        default: null
-        choices: []
-        aliases: []
+	default: null
+	choices: []
+	aliases: []
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
@@ -86,17 +80,16 @@ options:
 
 EXAMPLES =  '''
 
-    aci_port_channel_interface:
-        action: "{{ action }}"
-        port_channel: "{{ port_channel }}"
-        max_link: "{{ max_link }}"
-        min_link: "{{ min_link }}"
-        mode: "{{ mode }}"
-        descr: "{{ descr }}"
-        host: "{{ inventory_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
-	protocol: "{{ protocol }}"
+      aci_route_tag_policy:
+         action: "{{ action }}" 
+         tenant_name: "{{ tenant_name }}"
+         rtp_name: "{{ rtp_name }}" 
+         tag: "{{ tag }}"
+	 descr: "{{ descr }}" 
+	 host: "{{ inventory_hostname }}" 
+	 username: "{{ username }}"
+	 password: "{{ password }}"
+	 protocol: "{{ protocol }}"
 
 '''
 
@@ -111,11 +104,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post']),
-            port_channel=dict(type='str'),
-            max_link=dict(type='int', default='16'),
-            min_link=dict(type='int', default='1'),
-            mode=dict(choices=['off','mac-pin', 'active','passive','mac-pin-nicload'], default='off'),
+            action=dict(choices=['get', 'post', 'delete']),
+            tenant_name=dict(type='str', required=True),
+            rtp_name=dict(type='str'),
+            tag=dict(type='int', default='4294967295'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -130,31 +122,26 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-
-    max_link = module.params['max_link']
-    max_link = str(max_link)
-    min_link = module.params['min_link']
-    min_link = str(min_link)
-    mode = module.params['mode']
-    port_channel = module.params['port_channel']
+    
+    tenant_name = module.params['tenant_name']
+    rtp_name = module.params['rtp_name']
+    tag = module.params['tag']
+    tag = str(tag)
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/infra/lacplagp-'  + port_channel + '.json'
-    get_uri = '/api/node/class/lacpLagPol.json'
+    post_uri = '/api/mo/uni/tn-' + tenant_name + '/rttag-'  + rtp_name + '.json'
+    get_uri = '/api/node/class/l3extRouteTagPol.json'
 
     config_data = {
-     "lacpLagPol": {
-	"attributes": {
-	     "ctrl": "fast-sel-hot-stdby,graceful-conv,susp-individual",
-	     "descr": descr,
-	     "maxLinks": max_link,
-	     "minLinks": min_link,
-	     "mode": mode,
-	     "name": port_channel
-			}
-		} 
-     } 
+      "l3extRouteTagPol": {
+        "attributes": {
+          "descr": descr,
+          "name": rtp_name,
+          "tag": tag
+         }
+       }
+    } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -185,6 +172,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -207,7 +196,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

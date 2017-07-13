@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_l2_interface_policy
+module: aci_port_channel_interface
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -12,30 +12,44 @@ requirements:
     - ACI Fabric 1.0(3f)+
 notes:
 options:
-    action:
+   action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
-    l2_policy:
+   port_channel:
         description:
-            - L2 interface policy Name
+            - Port Channel name
         required: true
         default: null
         choices: []
         aliases: []
-    vlan_scope:
+    max_link:
         description:
-            - VLAN Scope 
+            - Maximum Links (range 1-16)
         required: false
-        default: 'global'
-        choices: ['global', 'portlocal']
+        default: '16'
+        choices: []
+        aliases: []
+    min_link:
+        description:
+            - Minimum Links (range 1-16)
+        required: false
+        default: '1'
+        choices: []
+        aliases: []
+    mode:
+	description: 
+	    - Port channel interface policy mode
+        required: false
+        default: 'off'
+        choices: ['off','mac-pin','active','passive','mac-pin-nicload']
         aliases: []
     descr:
         description:
-            - Description for L2 interface policy
+            - Description for Port Channel Interfaces
         required: false
         default: null
         choices: []
@@ -72,10 +86,12 @@ options:
 
 EXAMPLES =  '''
 
-    aci_l2_interface_policy: 
+    aci_port_channel_interface:
         action: "{{ action }}"
-        l2_policy: "{{ l2_policy }}"
-        vlan_scope: "{{ vlan_policy }}"
+        port_channel: "{{ port_channel }}"
+        max_link: "{{ max_link }}"
+        min_link: "{{ min_link }}"
+        mode: "{{ mode }}"
         descr: "{{ descr }}"
         host: "{{ inventory_hostname }}"
         username: "{{ username }}"
@@ -95,9 +111,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post'], required=False),
-            l2_policy=dict(type='str', required=True),
-            vlan_scope=dict(choices=['global', 'portlocal'], default='global', required=False),
+            action=dict(choices=['get', 'post', 'delete']),
+            port_channel=dict(type='str'),
+            max_link=dict(type='int', default='16'),
+            min_link=dict(type='int', default='1'),
+            mode=dict(choices=['off','mac-pin', 'active','passive','mac-pin-nicload'], default='off'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -113,23 +131,30 @@ def main():
     protocol = module.params['protocol']
     action = module.params['action']
 
-    l2_policy = module.params['l2_policy']
-    vlan_scope = module.params['vlan_scope'] 
+    max_link = module.params['max_link']
+    max_link = str(max_link)
+    min_link = module.params['min_link']
+    min_link = str(min_link)
+    mode = module.params['mode']
+    port_channel = module.params['port_channel']
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/infra/l2IfP-'  + l2_policy + '.json'
-    get_uri = '/api/node/class/infraAttEntityP.json'
+    post_uri = '/api/mo/uni/infra/lacplagp-'  + port_channel + '.json'
+    get_uri = '/api/node/class/lacpLagPol.json'
 
     config_data = {
-        "l2IfPol": {
-        	"attributes": {
-			"descr": descr,
-			"name": l2_policy,
-			"vlanScope": vlan_scope
+     "lacpLagPol": {
+	"attributes": {
+	     "ctrl": "fast-sel-hot-stdby,graceful-conv,susp-individual",
+	     "descr": descr,
+	     "maxLinks": max_link,
+	     "minLinks": min_link,
+	     "mode": mode,
+	     "name": port_channel
 			}
-		}
-      } 
+		} 
+     } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -161,6 +186,9 @@ def main():
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
 
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, verify=False)
+
     response = req.text
     status = req.status_code
 
@@ -182,7 +210,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass

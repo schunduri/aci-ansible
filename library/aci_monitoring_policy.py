@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 
-module: aci_route_tag_policy
+module: aci_monitoring_policy
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
@@ -15,10 +15,10 @@ notes:
 options:
     action:
         description:
-            - post or get
+            - post, get, or delete
         required: true
         default: null
-        choices: ['post','get']
+        choices: ['post','get', 'delete']
         aliases: []
     tenant_name:
         description:
@@ -27,27 +27,20 @@ options:
         default: null
         choices: []
         aliases: []
-    rtp_name:
+    monitoring_policy:
         description:
-            - Route Tag Policy name
+            - Monitoring Policy name
         required: true
         default: null
         choices: []
         aliases: []
-    tag:
+    descr:
         description:
-            - Tag value (range 0-4294967295)
+            - Description for monitoring policy
         required: false
-        default: '4294967295'
+        default: null
         choices: []
         aliases: []
-    descr:
-	description:
-	    - Description for Route Tag Policy
-        required: false
-	default: null
-	choices: []
-	aliases: []
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
@@ -80,16 +73,15 @@ options:
 
 EXAMPLES =  '''
 
-      aci_route_tag_policy:
-         action: "{{ action }}" 
-         tenant_name: "{{ tenant_name }}"
-         rtp_name: "{{ rtp_name }}" 
-         tag: "{{ tag }}"
-	 descr: "{{ descr }}" 
-	 host: "{{ inventory_hostname }}" 
-	 username: "{{ username }}"
-	 password: "{{ password }}"
-	 protocol: "{{ protocol }}"
+    aci_monitoring_policy:
+        action: "{{ action }}"
+        tenant_name: "{{ tenant_name }}"
+	monitoring_policy: "{{ monitoring_policy }}"
+        descr: "{{ descr }}"
+        host= "{{ inventory_hostname }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+	protocol: "{{ protocol }}"
 
 '''
 
@@ -104,10 +96,9 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post']),
-            tenant_name=dict(type='str', required=True),
-            rtp_name=dict(type='str'),
-            tag=dict(type='int', default='4294967295'),
+            action=dict(choices=['get', 'post', 'delete']),
+            tenant_name=dict(type='str'),
+            monitoring_policy=dict(type='str'),
             descr=dict(type='str',required=False),       
             host=dict(required=True),
             username=dict(type='str', default='admin'),
@@ -123,25 +114,24 @@ def main():
     protocol = module.params['protocol']
     action = module.params['action']
     
+    
     tenant_name = module.params['tenant_name']
-    rtp_name = module.params['rtp_name']
-    tag = module.params['tag']
-    tag = str(tag)
+    monitoring_policy = module.params['monitoring_policy']
     descr = module.params['descr']
     descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' + tenant_name + '/rttag-'  + rtp_name + '.json'
-    get_uri = '/api/node/class/l3extRouteTagPol.json'
+    post_uri = '/api/mo/uni/tn-' +tenant_name + '/monepg-'  + monitoring_policy + '.json'
+    get_uri = '/api/node/class/monEPGPol.json'
 
     config_data = {
-      "l3extRouteTagPol": {
-        "attributes": {
-          "descr": descr,
-          "name": rtp_name,
-          "tag": tag
-         }
-       }
-    } 
+         "monEPGPol": {
+             "attributes": {
+                "descr": descr,
+                "name": monitoring_policy
+               }
+         } 
+
+     } 
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -172,6 +162,8 @@ def main():
     elif action == 'get':
         req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
+    elif action == 'delete':
+        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
 
     response = req.text
     status = req.status_code
@@ -194,7 +186,5 @@ def main():
     module.exit_json(**results)
 
 from ansible.module_utils.basic import *
-try:
+if __name__ == "__main__":
     main()
-except:
-    pass
