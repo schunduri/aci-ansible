@@ -237,7 +237,7 @@ def main():
     aci = ACIModule(module)
 
     if method == 'get':
-        aci.request()
+        aci.request(path)
         module.exit_json(**aci.result)
     elif module.check_mode:
         # In check_mode we assume it works, but we don't actually perform the requested change
