@@ -137,7 +137,9 @@ class ACIModule(object):
 
         # Handle deprecated method/action parameter
         if self.params['method']:
-            self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
+            # Deprecate only if state was a valid option (not for aci_rest)
+            if self.module.argument_spec('state', False):
+                self.module.deprecate("Parameter 'method' or 'action' is deprecated, please use 'state' instead", '2.6')
             method_map = dict(delete='absent', get='query', post='present')
             self.params['state'] = method_map[self.params['method']]
         else:
