@@ -112,7 +112,7 @@ def main():
 
     aci = ACIModule(module)
 
-    if tenant_name is not None:
+    if tenant is not None:
         # Work with a specific tenant
         path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
     elif state == 'query':
