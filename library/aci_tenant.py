@@ -126,10 +126,10 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # Filter out module params with null values
+        # Filter out module parameters with null values
         aci.payload(aci_class='fvTenant', class_config=dict(name=tenant, descr=description))
 
-        # Generate config diff which will be used as POST reqest body
+        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvTenant')
 
         # Submit changes if module not in check_mode and the proposed is different than existing
