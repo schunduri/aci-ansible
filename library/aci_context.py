@@ -1,192 +1,137 @@
-#!/usr/bin/python
+#!usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
-
 ---
-
 module: aci_context
 short_description: Manage private networks, contexts, in an ACI fabric
 description:
-    -  Offers ability to manage private networks. Each context is a private network associated to a tenant, i.e. VRF
-author: Cisco
+- Offers ability to manage private networks. Each context is a private network associated to a tenant, i.e. VRF
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+version_added: '2.4'
 requirements:
-    - ACI Fabric 1.0(3f)+
-notes: Tenant must be exist prior to using this module
+- ACI Fabric 1.0(3f)+
+notes:
+- Tenant must be exist prior to using this module
 options:
-  action:
-        description:
-            - post, get, delete
-        required: true
-        default: null
-        choices: ['post','get','delete']
-        aliases: []
   tenant_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   vrf_name:
-        description:
-            - Context Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   policy_control_direction:
-        description:
-            - Policy Control Direction
-        required:false
-        default: ingress
-        choices: ['egress','ingress']
-        aliases: []
-   policy_control_preference:
-        description:
-            - Policy Control Preference
-        required:false
-        default: enforced
-        choices: ['enforced', 'unenforced']
-        aliases: []
-    descr:
-        description:
-            - Description for the AEP
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
-        description:
-            - Username used to login to the switch
-        required: true
-        default: 'admin'
-        choices: []
-        aliases: []
-    password:
-        description:
-            - Password used to login to the switch
-        required: true
-        default: null
-        choices: []
-        aliases:[]                                                                  
-    protocol:
-        description:
-            - Dictates connection protocol to use
-        required: false
-        default: https
-        choices: ['http', 'https']
-        aliases: []
+    description:
+    - Tenant Name
+    required: false
+  vrf_name:
+    description:
+    - Context Name
+    required: false
+  policy_control_direction:
+    description:
+    - Policy Control Direction
+    required: false
+    choices: ['egress','ingress']
+  policy_control_preference:
+    description:
+    - Policy Control Preference
+    required: false
+    choices: ['enforced', 'unenforced']
+  descr:
+    description:
+    - Description for the AEP
+    required: false
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = '''
-
-    aci_context:
-       action: "{{ action }}"
-       vrf_name: "{{ vrf_name }}"
-       tenant_name: "{{ tenant_name }}"
-       policy_control_direction: "{{  policy_control_direction }}"
-       policy_control_preference: "{{ policy_control_preference }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
-
+- name: ENSURE CONTEXT EXISTS
+  aci_context:
+    vrf_name: "vrf_lab"
+    tenant_name: "lab_tenant"
+    descr: "Lab VRF"
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
 '''
-import socket
-import json
-import requests
+
+RETURN = '''
+'''
+
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
-
-    ''' Ansible module to take all the parameter values from the playbook '''
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['post', 'get', 'delete']),
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-            vrf_name=dict(type="str", required=False),
-            tenant_name=dict(type="str", required=False),
-            descr=dict(type="str", required=False),
-            policy_control_preference=dict(choices=['enforced','unenforced'], required=False, default='enforced'),
-            policy_control_direction=dict(choices=['egress','ingress'], required=False, default='ingress'),
-        ),
-        supports_check_mode=False
+    argument_spec = aci_argument_spec
+    argument_spec.update(
+        description=dict(type='str', required=False),
+        policy_control_direction=dict(choices=['ingress', 'egress'], type='str', required=False),
+        policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str', required=False),
+        state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
+        tenant_name=dict(type='str', required=False),
+        vrf_name=dict(type='str', required=False)
     )
 
-    vrf_name=module.params['vrf_name']
-    tenant_name=module.params['tenant_name']
-    descr=module.params['descr']
-    descr = str(descr)
-    policy_control_direction=module.params['policy_control_direction']
-    policy_control_preference=module.params['policy_control_preference']
-    username = module.params['username']
-    password = module.params['password']
-    protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-    action = module.params['action']
-    post_uri ='api/mo/uni/tn-'+tenant_name+'/ctx-'+vrf_name+'.json'
-    get_uri = 'api/node/class/fvCtx.json'
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True
+    )
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {"fvCtx":{"attributes":{"name":vrf_name, "descr":descr, "pcEnfDir":policy_control_direction, "pcEnfPref":policy_control_preference }}}
-    payload_data = json.dumps(config_data)
+    description = module.params['description']
+    policy_control_direction = module.params['policy_control_direction']
+    policy_control_preference = module.params['policy_control_preference']
+    state = module.params['state']
+    tenant_name = module.params['tenant_name']
+    vrf_name = module.params['vrf_name']
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    aci = ACIModule(module)
 
-    if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
-
-    ''' Sending the request to APIC '''
-    if post_uri.startswith('/'):
-        post_uri = post_uri[1:]
-    post_url = apic + post_uri
-
-    if get_uri.startswith('/'):
-        get_uri = get_uri[1:]
-    get_url = apic + get_uri
-
-    if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-   
-    elif action == 'delete':
-        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    ''' Check response status and parse it for status || Throw an error otherwise '''
-    response = req.text
-    status = req.status_code
-    changed = False
-
-    if req.status_code == 200:
-        if action == 'post':
-            changed = True
+    if vrf_name is not None:
+        # fail when vrf_name is provided without tenant_name
+        if tenant_name is not None:
+            path = 'api/mo/uni/tn-%(tenant_name)s/ctx-%(vrf_name)s.json' % module.params
         else:
-            changed = False
-
+            module.fail_json(msg="Parameter 'tenant_name' is required with 'vrf_name'")
+    elif state == 'query':
+        path = 'api/class/fvCtx.json'
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg="Parameters 'tenant_name,' and 'vrf_name' are required for state 'absent' or 'present'")
 
-    results = {}
-    results['status'] = status
-    results['response'] = response
-    results['changed'] = changed
-    module.exit_json(**results)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-from ansible.module_utils.basic import *
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module params with null values
+        aci.payload(aci_class='fvCtx', class_config=dict(descr=description, pcEnfDir=policy_control_direction, pcEnfPref=policy_control_preference, name=vrf_name))
+
+        # generate config diff which will be used as POST request body
+        aci.get_diff(aci_class='fvCtx')
+
+        # submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    module.exit_json(**aci.result)
+
+
 if __name__ == "__main__":
     main()

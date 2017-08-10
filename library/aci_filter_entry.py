@@ -1,209 +1,165 @@
-#!/usr/bin/python
+#!usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
-
-module: aci_filter_entry
-short_description: Manages filter entries that will be assigned to a filter
+module: aci_tenant
+short_description: Manage tenants on Cisco ACI fabrics
 description:
-    -  Manages filter entries that will be assigned to an already created filter
-author: Cisco
+- Manage tenants on a Cisco ACI fabric.
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+version_added: '2.4'
 requirements:
-    - ACI Fabric 1.0(3f)+
-notes: Tenant must be exist prior to using this module
+- ACI Fabric 1.0(3f)+
 options:
-   action:
-        description:
-            - post, get, or delete
-        required: true
-        default: null
-        choices: ['post','get', 'delete']
-        aliases: []
-   tenant_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   entry_name:
-        description:
-            - Filter Entry Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   ether_type:
-        description:
-            - Ether Type 
-        required:false
-        default: ip
-        choices: []
-        aliases: []
-   icmp_msg_type:
-        description:
-            - ICMP Message type v4
-        required:false
-        default: unspecified
-        choices: ['echo','echo-rep','dst-unreach','unspecified']
-        aliases: []
-    descr:
-        description:
-            - Description for the AEP
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
-        description:
-            - Username used to login to the switch
-        required: true
-        default: 'admin'
-        choices: []
-        aliases: []
-    password:
-        description:
-            - Password used to login to the switch
-        required: true
-        default: null
-        choices: []
-        aliases:[]                                                                  
-    protocol:
-        description:
-            - Dictates connection protocol to use
-        required: false
-        default: https
-        choices: ['http', 'https']
-        aliases: []
+  tenant_name:
+    description:
+    - The name of the tenant.
+    required: yes
+  descr:
+    description:
+    - Description for the AEP.
+  state:
+    description:
+    - present, absent, query
+    default: present
+    choices: [ absent, present, query ]
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = '''
-
-    aci_filter_entry:
-       action: "{{ action }}"
-       entry_name: "{{ entry_name }}"
-       tenant_name: "{{ tenant_name }}"
-       ether_name: "{{  ether_name }}"
-       icmp_msg_type: "{{ icmp_msg_type }}"
-       filter_name: "{{ filter_name }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
-
+- aci_filter_entry:
+    action: "{{ action }}"
+    entry_name: "{{ entry_name }}"
+    tenant_name: "{{ tenant_name }}"
+    ether_name: "{{  ether_name }}"
+    icmp_msg_type: "{{ icmp_msg_type }}"
+    filter_name: "{{ filter_name }}"
+    descr: "{{ descr }}"
+    host: "{{ inventory_hostname }}"
+    username: "{{ user }}"
+    password: "{{ pass }}"
+    protocol: "{{ protocol }}"
 '''
 
-import socket
-import json
-import requests
+RETURN = '''
+'''
+
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
+VALID_ARP_FLAGS = ['arp_reply', 'arp_request', 'unspecified']
+VALID_ETHER_TYPES = ['arp', 'fcoe', 'ip', 'mac_security', 'mpls_ucast', 'trill', 'unspecified']
+VALID_IP_PROTOCOLS = ['eigrp', 'egp', 'icmp', 'icmpv6', 'igmp', 'igp', 'l2tp', 'ospfigp', 'pim', 'tcp', 'udp', 'unspecified']
+
+# mapping dicts are used to normalize the proposed data to what the APIC expects, which will keep diffs accurate
+ARP_FLAG_MAPPING = dict(arp_reply='reply', arp_request='req', unspecified=None)
+FILTER_PORT_MAPPING = {'443': 'https', '25': 'smtp', '80': 'http', '20': 'ftpData', '53': 'dns', '110': 'pop3', '554': 'rtsp'}
+
 
 def main():
-
-    ''' Ansible module to take all the parameter values from the playbook '''
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['post', 'get', 'delete']),
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-            entry_name=dict(type="str", required=True),
-            ether_type=dict(type="str", required=False, default='unspecified'),
-            filter_name=dict(type="str", required=True),
-            icmp_msg_type=dict(choices=['echo','echo-rep','dst-unreach','unspecified'], default='unspecified'),
-            tenant_name=dict(type="str", required=True),
-            descr=dict(type="str", required=False),
-        ),
-        supports_check_mode=False
+    argument_spec = aci_argument_spec
+    argument_spec.update(
+        arp_flag=dict(choices=VALID_ARP_FLAGS, required=False, type='str'),
+        dest_port=dict(type="str", required=False),
+        dest_port_end=dict(type="str", required=False),
+        dest_port_start=dict(type="str", required=False),
+        entry_name=dict(type="str", required=False),
+        ether_type=dict(choices=VALID_ETHER_TYPES, type="str", required=False),
+        filter_name=dict(type="str", required=False),
+        ip_protocol=dict(choices=VALID_IP_PROTOCOLS, required=False, type='str'),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        tenant_name=dict(type="str", required=False)
     )
 
-    entry_name=module.params['entry_name']
-    ether_type=module.params['ether_type']
-    tenant_name=module.params['tenant_name']
-    descr=module.params['descr']
-    descr=str(descr)
-    filter_name=module.params['filter_name']
-    icmp_msg_type=module.params['icmp_msg_type']
-    username = module.params['username']
-    password = module.params['password']
-    protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-    action = module.params['action']
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
-    post_uri ='api/node/mo/uni/tn-'+tenant_name+'/flt-'+filter_name+ '.json'
-    get_uri = 'api/node/class/vzEntry.json'
-    delete_uri = 'api/node/mo/uni/tn-' +tenant_name+'/flt-'+filter_name+'/e-'+entry_name+'.json'
-    ''' Config payload to enable the physical interface '''
-    config_data = {
-        "vzEntry": {
-           "attributes": {
-              "etherT": ether_type,
-              "name": entry_name, 
-              "descr":descr,
-              "icmpv4T": icmp_msg_type
-              }
-            }
-        }
-    payload_data = json.dumps(config_data)
+    arp_flag = module.params['arp_flag']
+    if arp_flag is not None:
+        arp_flag = ARP_FLAG_MAPPING[arp_flag]
+    dest_port = module.params['dest_port']
+    if dest_port in FILTER_PORT_MAPPING.keys():
+        dest_port = FILTER_PORT_MAPPING[dest_port]
+    dest_port_end = module.params['dest_port_end']
+    if dest_port_end in FILTER_PORT_MAPPING.keys():
+        dest_port_end = FILTER_PORT_MAPPING[dest_port_end]
+    dest_port_start = module.params['dest_port_start']
+    if dest_port_start in FILTER_PORT_MAPPING.keys():
+        dest_port_start = FILTER_PORT_MAPPING[dest_port_start]
+    entry_name = module.params['entry_name']
+    ether_type = module.params['ether_type']
+    filter_name = module.params['filter_name']
+    ip_protocol = module.params['ip_protocol']
+    state = module.params['state']
+    tenant_name = module.params['tenant_name']
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    aci = ACIModule(module)
 
-    if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
+    # validate that dest_port is not passed with dest_port_start or dest_port_end
+    if dest_port is not None and (dest_port_end is not None or dest_port_start is not None):
+        module.fail_json(msg="Parameter 'dest_port' cannot be used with 'dest_port_end' and 'dest_port_start'")
+    elif dest_port is not None:
+        dest_port_end = dest_port
+        dest_port_start = dest_port
 
-    ''' Sending the request to APIC '''
-    if post_uri.startswith('/'):
-        post_uri = post_uri[1:]
-    post_url = apic + post_uri
-
-    if get_uri.startswith('/'):
-        get_uri = get_uri[1:]
-    get_url = apic + get_uri
-
-    if delete_uri.startswith('/'):
-       delete_uri = delete_uri[1:]
-    delete_url = apic + delete_uri
-
-    if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'delete':
-        req = requests.delete(delete_url, cookies=authenticate.cookies, verify=False)
-
-    ''' Check response status and parse it for status || Throw an error otherwise '''
-    response = req.text
-    status = req.status_code
-    changed = False
-
-    if req.status_code == 200:
-        if action == 'post':
-            changed = True
+    if entry_name is not None:
+        # fail when entry_name is provided without tenant_name and filter_name
+        if tenant_name is not None and filter_name is not None:
+            path = 'api/node/mo/uni/tn-%(tenant_name)s/flt-%(filter_name)s/e-%(entry_name)s.json' % module.params
         else:
-            changed = False
-
+            module.fail_json(msg="Parameters 'tenant_name' and 'filter_name' are required with 'entry_name'")
+    elif state == 'query':
+        path = 'api/node/class/vzEntry.json'
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg="Parameters 'tenant_name,' 'filter_name,' and 'entry_name' are required for state 'absent' or 'present'")
 
-    results = {}
-    results['status'] = status
-    results['response'] = response
-    results['changed'] = changed
-    module.exit_json(**results)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-from ansible.module_utils.basic import *
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module params with null values
+        aci.payload(aci_class='vzEntry', class_config=dict(arpOpc=arp_flag,
+                                                           dFromPort=dest_port_start,
+                                                           dToPort=dest_port_end,
+                                                           etherT=ether_type,
+                                                           name=entry_name,
+                                                           prot=ip_protocol))
+
+        # generate config diff which will be used as POST request body
+        aci.get_diff(aci_class='vzEntry')
+
+        # submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    module.exit_json(**aci.result)
+
+
 if __name__ == "__main__":
     main()

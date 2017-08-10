@@ -1,164 +1,151 @@
-#!/usr/bin/python
+#!usr/bin/python
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = '''
 ---
-
 module: aci_tenant
-short_description: Direct access to the APIC API
+short_description: Manage tenants on Cisco ACI fabrics
 description:
-    - Offers direct access to the APIC API
-author: Cisco
+- Manage tenants on a Cisco ACI fabric.
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+version_added: '2.4'
 requirements:
-    - ACI Fabric 1.0(3f)+
-notes:
+- ACI Fabric 1.0(3f)+
 options:
-    action:
-        description:
-            - post, get or delete
-        required: true
-        default: null
-        choices: ['post','get','delete']
-        aliases: []
-    tenant_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    descr:
-        description:
-            - Description for the AEP
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
-        description:
-            - Username used to login to the switch
-        required: true
-        default: 'admin'
-        choices: []
-        aliases: []
-    password:
-        description:
-            - Password used to login to the switch
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    protocol:
-        description:
-            - Dictates connection protocol to use
-        required: false
-        default: https
-        choices: ['http', 'https']
-        aliases: []
+  tenant_name:
+    description:
+    - The name of the tenant.
+    required: yes
+  descr:
+    description:
+    - Description for the AEP.
+  state:
+    description:
+    - present, absent, query
+    default: present
+    choices: [ absent, present, query ]
+extends_documentation_fragment: aci
 '''
 
 EXAMPLES = '''
+- name: Add a new tenant
+  aci_tenant:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: Name of the tenant
+    description: Description for the tenant
+    state: present
 
-    aci_tenant:
-       action: "{{ action }}"
-       tenant_name: "{{ tenant_name }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
+- name: Remove a tenant
+  aci_tenant:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: Name of the tenant
+    state: absent
 
+- name: Query a tenant
+  aci_tenant:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: Name of the tenant
+    state: query
+
+- name: Query all tenants
+  aci_tenant:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
-import socket
-import json
-import requests
+RETURN = '''
+status:
+  description: The status code of the http request
+  returned: upon making a successful GET, POST or DELETE request to the APIC
+  type: int
+  sample: 200
+response:
+  description: Response text returned by APIC
+  returned: when a HTTP request has been made to APIC
+  type: string
+  sample: '{"totalCount":"0","imdata":[]}'
+'''
+
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
-
-    ''' Ansible module to take all the parameter values from the playbook '''
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['post', 'get', 'delete']),
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-            tenant_name=dict(type="str"),
-            descr=dict(type="str", required=False),
-        ),
-        supports_check_mode=False
+    argument_spec = aci_argument_spec
+    argument_spec.update(
+        tenant_name=dict(type='str', aliases=['name'], required=False),
+        description=dict(type='str', aliases=['descr'], required=False),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
-    tenant_name=module.params['tenant_name']
-    descr=module.params['descr']
-    descr=str(descr)
-    
-    username = module.params['username']
-    password = module.params['password']
-    protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-    action = module.params['action']
-    
-    post_uri ='api/mo/uni/tn-'+tenant_name+'.json'
-    get_uri = 'api/node/class/fvTenant.json'
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {"fvTenant":{"attributes":{"name":tenant_name, "descr":descr }}}
-    payload_data = json.dumps(config_data)
+    tenant_name = module.params['tenant_name']
+    description = module.params['description']
+    state = module.params['state']
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    aci = ACIModule(module)
 
-    if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
-
-    ''' Sending the request to APIC '''
-    if post_uri.startswith('/'):
-        post_uri = post_uri[1:]
-    post_url = apic + post_uri
-
-    if get_uri.startswith('/'):
-        get_uri = get_uri[1:]
-    get_url = apic + get_uri
-
-    if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-    
-    elif action == 'delete':
-        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    ''' Check response status and parse it for status || Throw an error otherwise '''
-    response = req.text
-    status = req.status_code
-    changed = False
-
-    if req.status_code == 200:
-        if action == 'post':
-            changed = True
-        else:
-            changed = False
-
+    if tenant_name is not None:
+        # Work with a specific tenant
+        path = 'api/mo/uni/tn-%(tenant_name)s.json' % module.params
+    elif state == 'query':
+        # Query all tenants
+        path = 'api/class/fvTenant.json'
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg="Parameter 'tenant_name' is required for state 'absent' or 'present'")
 
-    results = {}
-    results['status'] = status
-    results['response'] = response
-    results['changed'] = changed
-    module.exit_json(**results)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-from ansible.module_utils.basic import *
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module params with null values
+        aci.payload(aci_class='fvTenant', class_config=dict(name=tenant_name, descr=description))
+
+        # generate config diff which will be used as POST reqest body
+        aci.get_diff(aci_class='fvTenant')
+
+        # submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    module.exit_json(**aci.result)
+
+
 if __name__ == "__main__":
     main()
