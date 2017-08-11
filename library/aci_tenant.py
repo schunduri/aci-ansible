@@ -19,6 +19,7 @@ description:
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
@@ -30,7 +31,7 @@ options:
     aliases: [ name, tenant_name ]
   description:
     description:
-    - Description for the AEP.
+    - Description for the tenant.
     aliases: [ descr ]
   state:
     description:
@@ -76,16 +77,7 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-status:
-  description: status code of the http request
-  returned: always
-  type: int
-  sample: 200
-response:
-  description: response text returned by APIC
-  returned: when a HTTP request has been made to APIC
-  type: string
-  sample: '{"totalCount":"0","imdata":[]}'
+#
 '''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
@@ -95,8 +87,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', aliases=['name', 'tenant_name'], required=False),
-        description=dict(type='str', aliases=['descr'], required=False),
+        tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all tenants
+        description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
