@@ -3,11 +3,19 @@
 
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
 DOCUMENTATION = r'''
+---
 module: aci_aep
 short_description: Direct access to the Cisco ACI APIC API
 description:
-- Offers direct access to the Cisco ACI APIC API to manage Attachable Entity Profile.
+- Offers direct access to the Cisco ACI APIC API to manage Attachable Access Entity Profile.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -81,7 +89,6 @@ def main():
         aep_name=dict(type='str'),
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
     module = AnsibleModule(
@@ -90,18 +97,15 @@ def main():
     )
 
     aep_name = module.params['aep_name']
-    description = module.params['description']
+    description = str(module.params['description'])
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    # TODO: Investigate for a URI to query objects for a specific tenant
-    if aep_name is not None:
-        # Work with a specific AEP 
-        path = 'api/mo/uni/infra/attentp-%(aep_name)s.json' % module.params
+    if aep_name is not None or (aep_name is not None and state == 'query'):
+         path = 'api/mo/uni/infra/attentp-%(aep_name)s.json' % module.params
     elif state == 'query':
-        # Query all AEP
-        path = 'api/node/class/infraAttEntityP.json'
+        path = 'api/class/infraAttEntityP.json'
     else:
         module.fail_json(msg="Parameter 'aep_name' is required for state 'absent' or 'present'")
 
@@ -110,7 +114,7 @@ def main():
     aci.get_existing()
 
     if state == 'present':
-        # filter out module parameters with null values
+        # Filter out module parameters with null values
         aci.payload(aci_class='infraAttEntityP', class_config=dict(name=aep_name, descr=description))
 
         # Generate config diff which will be used as POST request body
@@ -123,7 +127,6 @@ def main():
         aci.delete_config()
 
     module.exit_json(**aci.result)
-
 
 if __name__ == "__main__":
     main()
