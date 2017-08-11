@@ -119,11 +119,12 @@ def main():
 
     aci = ACIModule(module)
 
-    if tenant is not None:
-        # Work with a specific application profile name
-        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+    if app_profile is not None:
+        if tenant is not None:
+             path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+        else:
+             path = 'api/class/fvTenant.json?rsp-subtree=children&rsp-subtree-class=fvAp&rsp-subtree-filter=eq(fvAp.name, "%(app_profile)s")&rsp-subtree-include=no-scoped' % module.params
     elif state == 'query':
-        # Query all application profile name
         path = 'api/class/fvAp.json'
     else:
         module.fail_json(msg="Parameter 'tenant' and 'app_profile' are required for state 'absent' or 'present'")
