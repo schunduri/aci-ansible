@@ -378,9 +378,10 @@ class ACIModule(object):
             children = []
             for child in child_configs:
                 for root_key in child.keys():
-                    for final_key in child[root_key]['attributes'].keys():
-                        if child[root_key]['attributes'][final_key] is not None:
+                    for final_keys, values in child[root_key]['attributes'].items():
+                        if values is not None:
                             children.append(child)
+                            break
 
             if children:
                 self.result['proposed'][aci_class].update(dict(children=children))
