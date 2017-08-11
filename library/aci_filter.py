@@ -117,6 +117,8 @@ def main():
 
     aci = ACIModule(module)
 
+    # TODO: Currently we require a tenant for a query, we could make this optional
+    # TODO: Investigate for a URI to query objects for a specific tenant
     if filter_name is not None:
         # Work with a specific filter
         path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter_name)s.json' % module.params
