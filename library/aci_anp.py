@@ -1,173 +1,154 @@
 #!/usr/bin/python
-DOCUMENTATION = '''
----
+# -*- coding: utf-8 -*-
 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
+---
 module: aci_anp
 short_description: Manage top level application network profile objects
 description:
     -  Manage top level application network profile object, i.e. this does
       not manage EPGs.
-author: Cisco
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieesrs)
+version_added: '2.4'
 requirements:
     - ACI Fabric 1.0(3f)+
 notes: Tenant must exist prior to using this module
 options:
-   action:
-        description:
-            - post, get or delete
-        required: true
-        default: null
-        choices: ['post', 'get','delete']
-        aliases: []
    tenant_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
+     description:
+     - The name of the tenant
+     required: yes
    app_profile_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    descr:
-        description:
-            - Description for the AEP
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
-        description:
-            - Username used to login to the switch
-        required: true
-        default: 'admin'
-        choices: []
-        aliases: []
-    password:
-        description:
-            - Password used to login to the switch
-        required: true
-        default: null
-        choices: []
-        aliases:[]                                                                  
-     protocol:
-        description:
-            - Dictates connection protocol to use
-        required: false
-        default: https
-        choices: ['http', 'https']
-        aliases: []
+     description:
+     - The name of the application network profile
+     required: yes
+   descr:
+     description:
+     - Description for the ANP
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
+extends_documentation_fragment: aci
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
+- name: Add a new ANP
+  aci_anp:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: production
+    application_profile_name: default
+    description: default ap
+    state: present
 
-    aci_anp:
-       action: "{{ action }}"
-       app_profile_name: "{{ app_profile_name }}"
-       tenant_name: "{{ tenant_name }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
+- name: Remove an ANP
+  aci_anp:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: production
+    app_profile_name: default
+    state: absent
 
+- name: Query an ANP
+  aci_anp:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    tenant_name: production
+    app_profile_name: default
+    state: query
+
+- name: Query all ANPs
+  aci_anp:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
-import socket
-import json
-import requests
+RETURN = r'''
+status:
+  description: status code of the http request
+  returned: always
+  type: int
+  sample: 200
+response:
+  description: response text returned by APIC
+  returned: when a HTTP request has been made to APIC
+  type: string
+  sample: '{"totalCount":"0","imdata":[]}'
+'''
+
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
-
-    ''' Ansible module to take all the parameter values from the playbook '''
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['post', 'get', 'delete']),
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-            app_profile_name=dict(type="str"),
-            tenant_name=dict(type="str"),
-            descr=dict(type="str"),
-        ),
-        supports_check_mode=False
+    argument_spec = aci_argument_spec
+    argument_spec.update(
+        tenant=dict(type='str', aliases=['name', 'tenant_name'], required=False),
+        app_profile=dict(type='str', aliases=['app_profile_name']),
+        description=dict(type='str', aliases=['descr'], required=False),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
-    app_profile_name=module.params['app_profile_name']
-    tenant_name=module.params['tenant_name']
-    descr=module.params['descr']
-    descr = str(descr)
-    username = module.params['username']
-    password = module.params['password']
-    protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-    action = module.params['action']
-    post_uri ='api/mo/uni/tn-'+tenant_name+'/ap-'+app_profile_name+'.json'
-    get_uri = 'api/node/class/fvAp.json'
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {"fvAp":{"attributes":{"name":app_profile_name, "descr":descr }}}
-    payload_data = json.dumps(config_data)
+    tenant = module.params['tenant']
+    app_profile = module.params['app_profile']
+    description = module.params['description']
+    state = module.params['state']
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    aci = ACIModule(module)
 
-    if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
-
-    ''' Sending the request to APIC '''
-    if post_uri.startswith('/'):
-        post_uri = post_uri[1:]
-    post_url = apic + post_uri
-
-    if get_uri.startswith('/'):
-        get_uri = get_uri[1:]
-    get_url = apic + get_uri
-
-    if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-     
-    elif action == 'delete':
-        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    ''' Check response status and parse it for status || Throw an error otherwise '''
-    response = req.text
-    status = req.status_code
-    changed = False
-
-    if req.status_code == 200:
-        if action == 'post':
-            changed = True
-        else:
-            changed = False
-
+    if tenant is not None:
+        # Work with a specific application profile name
+        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+    elif state == 'query':
+        # Query all application profile name
+        path = 'api/class/fvAp.json'
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg="Parameter 'tenant' and 'app_profile' are required for state 'absent' or 'present'")
 
-    results = {}
-    results['status'] = status
-    results['response'] = response
-    results['changed'] = changed
-    module.exit_json(**results)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-from ansible.module_utils.basic import *
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module parameters with null values
+        aci.payload(aci_class='fvAp', class_config=dict(name=app_profile, descr=description))
+
+        # Generate config diff which will be used as POST request body
+        aci.get_diff(aci_class='fvAp')
+
+        # Submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    module.exit_json(**aci.result)
+
+
 if __name__ == "__main__":
     main()
