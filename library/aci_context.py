@@ -123,7 +123,7 @@ def main():
         if tenant is not None:
             path = 'api/mo/uni/tn-%(tenant)s/ctx-%(vrf)s.json' % module.params
         elif state == 'query':
-            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree-class=fvCtx&rsp-subtree-include=no-scoped'
+            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=fvCtx&rsp-subtree-include=no-scoped' % module.params
     elif state == 'query':
         path = 'api/class/fvCtx.json'
     else:
