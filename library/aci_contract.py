@@ -1,201 +1,145 @@
 #!/usr/bin/python
-DOCUMENTATION = '''
+# -*- coding: utf-8 -*-
 
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+DOCUMENTATION = r'''
 module: aci_contract
-short_description: Manages initial contracts (does not include contract subjs)
+short_description: Manages initial contracts
 description:
-    -  Manages contract resource, but does not include subjects although
-        subjects can be removed using this module
-author: Cisco
+- Manages contract resources, but does not include subjects although
+  subjects can be removed using this module.
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
 requirements:
-    - ACI Fabric 1.0(3f)+
-notes: Tenant must be exist prior to using this module
+- ACI Fabric 1.0(3f)+
+notes:
+- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-    action:
-        description:
-            - post, get, delete
-        required: true
-        default: null
-        choices: ['post','get','delete']
-        aliases: []
-    tenant_name:
-        description:
-            - Tenant Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   contract_name:
-        description:
-            -Contract Name
-        required: true
-        default: null
-        choices: []
-        aliases: []
-   scope:
-        description:
-            -The scope of a service contract
-        required: true
-        default: 'context'
-        choices: ['context','application-profile','tenant','global']
-        aliases: []
-   priority:
-        description:
-            - Qos class 
-        required: false
-        default: unspecified
-        choices: [ 'unspecified','level1','level2','level3']
-        aliases: []
-   target:
-        description:
-            - Target DSCP
-        required:false
-        default: unspecified
-        choices: []
-        aliases: []
-    descr:
-        description:
-            - Description for the AEP
-        required: false
-        default: null
-        choices: []
-        aliases: []
-    host:
-        description:
-            - IP Address or hostname of APIC resolvable by Ansible control host
-        required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
-        description:
-            - Username used to login to the switch
-        required: true
-        default: 'admin'
-        choices: []
-        aliases: []
-    password:
-        description:
-            - Password used to login to the switch
-        required: true
-        default: null
-        choices: []
-        aliases:[]                                                                  
-    protocol:
-        description:
-            - Dictates connection protocol to use
-        required: false
-        default: https
-        choices: ['http', 'https']
-        aliases: []
+  contract:
+    description:
+    - The name of the contract.
+    required: yes
+    aliases: [ contract_name, name ]
+  description:
+    description:
+    - Description for the filter.
+    aliases: [ descr ]
+  tenant:
+    description:
+    - The name of the tenant.
+    required: yes
+    aliases: [ tenant_name ]
+  scope:
+    description:
+    - The scope of a service contract.
+    choices: [ application-profile, context, global, tenant ]
+    default: 'context'
+  priority:
+    description:
+    - The desired QoS class to be used.
+    default: unspecified
+    choices: [ level1, level2, level3, unspecified ]
+  dscp:
+    description:
+    - The target Differentiated Service (DSCP) value.
+    choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
+    default: unspecified
+    aliases: [ target ]
+extends_documentation_fragment: aci
 '''
 
-EXAMPLES = '''
-
-    aci_contract:
-       action: "{{ action }}"
-       contract_name: "{{ contract_name }}"
-       tenant_name: "{{ tenant_name }}"
-       priority: "{{ priority }}"
-       scope: "{{ scope }}"
-       target: "{{ target }}"
-       descr: "{{ descr }}"
-       host: "{{ inventory_hostname }}"
-       username: "{{ user }}"
-       password: "{{ pass }}"
-       protocol: "{{ protocol }}"
-
+# FIXME: Add more, better examples
+EXAMPLES = r'''
+- aci_contract:
+    hostname: '{{ inventory_hostname }}'
+    username: '{{ username }}'
+    password: '{{ password }}'
+    contract: '{{ contract }}'
+    description: '{{ descr }}'
+    tenant: '{{ tenant }}'
+    scope: '{{ scope }}'
+    priority: '{{ priority }}'
+    target: '{{ target }}'
 '''
-import socket
-import json
-import requests
+
+RETURN = r'''
+#
+'''
+
+from ansible.module_utils.aci import ACIModule, aci_argument_spec
+from ansible.module_utils.basic import AnsibleModule
+
 
 def main():
-
-    ''' Ansible module to take all the parameter values from the playbook '''
-    module = AnsibleModule(
-        argument_spec=dict(
-            action=dict(choices=['post', 'get','delete']),
-            host=dict(required=True),
-            username=dict(type='str', default='admin'),
-            password=dict(type='str'),
-            protocol=dict(choices=['http', 'https'], default='https'),
-            contract_name=dict(type="str", required=False),
-            tenant_name=dict(type="str", required=False),
-            priority=dict(choices=['unspecified','level1','level2','level3'],default='unspecified'),
-            scope=dict(choices=['context','application-profile','tenant','global'],default='context'),
-            target=dict(type="str", required=False, default='unspecified'),
-            descr=dict(type="str", required=False),
-        ),
-        supports_check_mode=False
+    argument_spec = aci_argument_spec
+    argument_spec.update(
+        contract=dict(type='str', required=False, aliases=['contract_name', 'name']),  # Not required for querying all contracts
+        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all contracts
+        description=dict(type='str', aliases=['descr']),
+        scope=dict(type='str', choices=['application-profile', 'context', 'global', 'tenant']),
+        priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),  # No default provided on purpose
+        dscp=dict(type='str',
+                  choices=['AF11', 'AF12', 'AF13', 'AF21', 'AF22', 'AF23', 'AF31', 'AF32', 'AF33', 'AF41', 'AF42', 'AF43',
+                           'CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5', 'CS6', 'CS7', 'EF', 'VA', 'unspecified'],
+                  aliases=['target']),  # No default provided on purpose
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
 
-    contract_name=module.params['contract_name']
-    tenant_name=module.params['tenant_name']
-    priority=module.params['priority']
-    scope=module.params['scope']
-    target=module.params['target']
-    descr=module.params['descr']
-    descr=str(descr)
-    username = module.params['username']
-    password = module.params['password']
-    protocol = module.params['protocol']
-    host = socket.gethostbyname(module.params['host'])
-    action = module.params['action']
-    post_uri ='api/mo/uni/tn-'+tenant_name+'/brc-'+contract_name+'.json'
-    get_uri = 'api/node/class/vzBrCP.json'
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True,
+    )
 
-    ''' Config payload to enable the physical interface '''
-    config_data = {"vzBrCP":{"attributes":{"name":contract_name, "prio":priority,"scope":scope,"targetDscp":target, "descr":descr}}}
-    payload_data = json.dumps(config_data)
+    contract = module.params['contract']
+    tenant = module.params['tenant']
+    description = module.params['description']
+    scope = module.params['scope']
+    priority = module.params['priority']
+    target = module.params['target']
+    state = module.params['state']
 
-    ''' authentication || || Throw an error otherwise'''
-    apic = '{0}://{1}/'.format(protocol, host)
-    auth = dict(aaaUser=dict(attributes=dict(name=username, pwd=password)))
-    url=apic+'api/aaaLogin.json'
-    authenticate = requests.post(url, data=json.dumps(auth), timeout=2, verify=False)
+    aci = ACIModule(module)
 
-    if authenticate.status_code != 200:
-        module.fail_json(msg='could not authenticate to apic', status=authenticate.status_code, response=authenticate.text)
-
-    ''' Sending the request to APIC '''
-    if post_uri.startswith('/'):
-        post_uri = post_uri[1:]
-    post_url = apic + post_uri
-
-    if get_uri.startswith('/'):
-        get_uri = get_uri[1:]
-    get_url = apic + get_uri
-
-    if action == 'post':
-        req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'delete':
-        req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    elif action == 'get':
-        req = requests.get(get_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-
-    ''' Check response status and parse it for status || Throw an error otherwise '''
-    response = req.text
-    status = req.status_code
-    changed = False
-
-    if req.status_code == 200:
-        if action == 'post':
-            changed = True
+    # TODO: This logic could be cleaner.
+    if contract is not None:
+        if tenant is not None:
+            path = 'api/mo/uni/tn-%(tenant)s/brc-%(contract)s.json' % module.params
+        elif state == 'query':
+            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=vzBrCP&rsp-subtree-include=no-scoped' % module.params
         else:
-            changed = False
-
+            module.fail_json(msg="Parameters 'tenant' is required for state 'absent' or 'present'")
+    elif state == 'query':
+        # Query all contracts
+        path = 'api/node/class/vzBrCP.json'
     else:
-        module.fail_json(msg='error issuing api request',response=response, status=status)
+        module.fail_json(msg="Parameter 'contract' is required for state 'absent' or 'present'")
 
-    results = {}
-    results['status'] = status
-    results['response'] = response
-    results['changed'] = changed
-    module.exit_json(**results)
+    aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-from ansible.module_utils.basic import *
+    aci.get_existing()
+
+    if state == 'present':
+        # Filter out module parameters with null values
+        aci.payload(aci_class='vzBrCP', class_config=dict(name=contract, descr=description, scope=scope, prio=priority, targetDscp=target))
+
+        # Generate config diff which will be used as POST request body
+        aci.get_diff(aci_class='vzBrCP')
+
+        # Submit changes if module not in check_mode and the proposed is different than existing
+        aci.post_config()
+
+    elif state == 'absent':
+        aci.delete_config()
+
+    module.exit_json(**aci.result)
+
+
 if __name__ == "__main__":
     main()
