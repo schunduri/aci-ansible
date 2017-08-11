@@ -1,25 +1,16 @@
-#!usr/bin/python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.0',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: aci_context
 short_description: Manage private networks, contexts, in an ACI fabric
@@ -28,50 +19,75 @@ description:
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
-- ACI Fabric 1.0(3f)+
+- Tested with ACI Fabric 1.0(3f)+
 notes:
-- Tenant must be exist prior to using this module
+- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-  tenant_name:
+  tenant:
     description:
-    - Tenant Name
-    required: false
-  vrf_name:
+    - The name of the Tenant the VRF should belong to.
+    aliases: [ tenant_name ]
+  vrf:
     description:
-    - Context Name
-    required: false
+    - The name of the VRF.
+    aliases: [ context, name, vrf_name ]
   policy_control_direction:
     description:
-    - Policy Control Direction
-    required: false
-    choices: ['egress','ingress']
+    - Determines if the policy should be enforced by the fabric on ingress or egress.
+    choices: [ egress, ingress ]
   policy_control_preference:
     description:
-    - Policy Control Preference
-    required: false
-    choices: ['enforced', 'unenforced']
-  descr:
+    - Determines if the Fabric should enforce Contrac Policies.
+    choices: [ enforced, unenforced ]
+  description:
     description:
-    - Description for the AEP
-    required: false
+    - Description for the VRF.
 extends_documentation_fragment: aci
 '''
 
-EXAMPLES = '''
-- name: ENSURE CONTEXT EXISTS
+EXAMPLES = r'''
+- name: Add a new VRF to a tenant
   aci_context:
-    vrf_name: "vrf_lab"
-    tenant_name: "lab_tenant"
-    descr: "Lab VRF"
-    host: "{{ inventory_hostname }}"
-    username: "{{ user }}"
-    password: "{{ pass }}"
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    vrf: vrf_lab
+    tenant: lab_tenant
+    descr: Lab VRF
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: present
+
+- name: Remove a VRF for a tenant
+  aci_context:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    vrf: vrf_lab
+    tenant: lab_tenant
+    state: absent
+
+- name: Query a VRF of a tenant
+  aci_context:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    vrf: vrf_lab
+    tenant: lab_tenant
+    state: query
+
+- name: Query all VRFs
+  aci_context:
+    hostname: apic
+    username: admin
+    password: SomeSecretPassword
+    state: query
 '''
 
-RETURN = '''
-'''
+RETURN = r''' # '''
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -80,12 +96,13 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        description=dict(type='str', required=False),
-        policy_control_direction=dict(choices=['ingress', 'egress'], type='str', required=False),
-        policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str', required=False),
+        description=dict(type='str', aliases=['descr']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        policy_control_direction=dict(choices=['ingress', 'egress'], type='str'),
+        policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str'),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
-        tenant_name=dict(type='str', required=False),
-        vrf_name=dict(type='str', required=False)
+        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all filters
+        vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']) # Not required for querying all filters
     )
 
     module = AnsibleModule(
@@ -97,21 +114,20 @@ def main():
     policy_control_direction = module.params['policy_control_direction']
     policy_control_preference = module.params['policy_control_preference']
     state = module.params['state']
-    tenant_name = module.params['tenant_name']
-    vrf_name = module.params['vrf_name']
+    tenant = module.params['tenant']
+    vrf = module.params['vrf']
 
     aci = ACIModule(module)
 
-    if vrf_name is not None:
-        # fail when vrf_name is provided without tenant_name
-        if tenant_name is not None:
-            path = 'api/mo/uni/tn-%(tenant_name)s/ctx-%(vrf_name)s.json' % module.params
-        else:
-            module.fail_json(msg="Parameter 'tenant_name' is required with 'vrf_name'")
+    if vrf is not None:
+        if tenant is not None:
+            path = 'api/mo/uni/tn-%(tenant)s/ctx-%(vrf)s.json' % module.params
+        elif state == 'query':
+            path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree-class=fvCtx&rsp-subtree-include=no-scoped'
     elif state == 'query':
         path = 'api/class/fvCtx.json'
     else:
-        module.fail_json(msg="Parameters 'tenant_name,' and 'vrf_name' are required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameters 'tenant,' and 'vrf' are required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -119,12 +135,12 @@ def main():
 
     if state == 'present':
         # Filter out module params with null values
-        aci.payload(aci_class='fvCtx', class_config=dict(descr=description, pcEnfDir=policy_control_direction, pcEnfPref=policy_control_preference, name=vrf_name))
+        aci.payload(aci_class='fvCtx', class_config=dict(descr=description, pcEnfDir=policy_control_direction, pcEnfPref=policy_control_preference, name=vrf))
 
-        # generate config diff which will be used as POST request body
+        # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvCtx')
 
-        # submit changes if module not in check_mode and the proposed is different than existing
+        # Submit changes if module not in check_mode and the proposed is different than existing
         aci.post_config()
 
     elif state == 'absent':
