@@ -13,35 +13,38 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_anp
-short_description: Manage top level application network profile objects.
+short_description: Manage top level application network profile objects
 description:
 -  Manage top level application network profile object, i.e. this does not manage EPGs.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
 version_added: '2.4'
 requirements:
-    - ACI Fabric 1.0(3f)+
+- ACI Fabric 1.0(3f)+
 notes: 
 - The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-   tenant_name:
+   tenant:
      description:
-     - The name of the tenant.
+     - The name of an existing tenant.
      required: yes
-   app_profile_name:
+     aliases: ['tenant_name']
+   app_profile:
      description:
      - The name of the application network profile.
      required: yes
+     aliases: ['app_profile_name']
    descr:
      description:
      - Description for the ANP.
   state:
-    description:
-    - Use C(present) or C(absent) for adding or removing.
-    - Use C(query) for listing an object or multiple objects.
-    choices: [ absent, present, query ]
-    default: present
+     description:
+     - Use C(present) or C(absent) for adding or removing.
+     - Use C(query) for listing an object or multiple objects.
+     choices: [ absent, present, query ]
+     default: present
 extends_documentation_fragment: aci
 '''
 
@@ -51,8 +54,8 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    tenant_name: production
-    application_profile_name: default
+    tenant: production
+    app_profile: default
     description: default ap
     state: present
 
@@ -61,8 +64,8 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    tenant_name: production
-    app_profile_name: default
+    tenant: production
+    app_profile: default
     state: absent
 
 - name: Query an ANP
@@ -70,8 +73,8 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    tenant_name: production
-    app_profile_name: default
+    tenant: production
+    app_profile: default
     state: query
 
 - name: Query all ANPs
@@ -83,17 +86,12 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-status:
-  description: status code of the http request
-  returned: always
-  type: int
-  sample: 200
-response:
-  description: response text returned by APIC
-  returned: when a HTTP request has been made to APIC
-  type: string
-  sample: '{"totalCount":"0","imdata":[]}'
+
+#
+
 '''
+
+import json 
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -102,7 +100,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', aliases=['name', 'tenant_name'], required=False),
+        tenant=dict(type='str', aliases=['tenant_name']), #tenant not required for querying all anps
         app_profile=dict(type='str', aliases=['app_profile_name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
