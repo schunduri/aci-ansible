@@ -13,29 +13,29 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_anp
-short_description: Manage top level application network profile objects
+short_description: Manage top level application network profile objects.
 description:
-    -  Manage top level application network profile object, i.e. this does
-      not manage EPGs.
+-  Manage top level application network profile object, i.e. this does not manage EPGs.
 author:
 - Swetha Chunduri (@schunduri)
-- Dag Wieers (@dagwieesrs)
+- Dag Wieers (@dagwieers)
 version_added: '2.4'
 requirements:
     - ACI Fabric 1.0(3f)+
-notes: Tenant must exist prior to using this module
+notes: 
+- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
    tenant_name:
      description:
-     - The name of the tenant
+     - The name of the tenant.
      required: yes
    app_profile_name:
      description:
-     - The name of the application network profile
+     - The name of the application network profile.
      required: yes
    descr:
      description:
-     - Description for the ANP
+     - Description for the ANP.
   state:
     description:
     - Use C(present) or C(absent) for adding or removing.
