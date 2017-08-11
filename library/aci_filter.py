@@ -68,7 +68,7 @@ EXAMPLES = r'''
     filter: web_filter
     tenant: production
     state: absent
-  
+
 - name: Query a filter of a tenant
   aci_filter:
     hostname: apic

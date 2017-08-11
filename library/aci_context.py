@@ -102,7 +102,7 @@ def main():
         policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str'),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
         tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all filters
-        vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']) # Not required for querying all filters
+        vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all filters
     )
 
     module = AnsibleModule(

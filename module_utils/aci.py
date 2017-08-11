@@ -305,7 +305,7 @@ class ACIModule(object):
             if config:
                 config["name"] = proposed_config["name"]
                 config = {aci_class: {'attributes': config}}
-        
+
             # compare existing child dictionaries with what is in existing
             if proposed_children:
                 existing_children = self.result['existing'][0][aci_class].get('children', [])
@@ -315,7 +315,6 @@ class ACIModule(object):
                     config[aci_class].update({'children': children})
                 elif children:
                     config = {aci_class: {'attributes': {'name': proposed_config['name']}, 'children': children}}
-
 
         else:
             config = self.result['proposed']
