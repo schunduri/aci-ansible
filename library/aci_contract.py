@@ -8,14 +8,15 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
 module: aci_contract
-short_description: Manages initial contracts
+short_description: Manage contract resources on Cisco ACI fabrics
 description:
-- Manages contract resources, but does not include subjects although
-  subjects can be removed using this module.
+- Manage contract resources on Cisco ACI fabrics.
+- This does not include subjects although subjects can be removed using this module.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
+version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
@@ -28,7 +29,7 @@ options:
     aliases: [ contract_name, name ]
   description:
     description:
-    - Description for the filter.
+    - Description for the contract.
     aliases: [ descr ]
   tenant:
     description:
@@ -51,6 +52,12 @@ options:
     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
     default: unspecified
     aliases: [ target ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 
@@ -79,8 +86,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        contract=dict(type='str', required=False, aliases=['contract_name', 'name']),  # Not required for querying all contracts
-        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all contracts
+        contract=dict(type='str', required=False, aliases=['contract_name', 'name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         scope=dict(type='str', choices=['application-profile', 'context', 'global', 'tenant']),
         priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),  # No default provided on purpose
@@ -116,7 +123,7 @@ def main():
         else:
             module.fail_json(msg="Parameters 'tenant' is required for state 'absent' or 'present'")
     elif state == 'query':
-        # Query all contracts
+        # Query all objects
         path = 'api/node/class/vzBrCP.json'
     else:
         module.fail_json(msg="Parameter 'contract' is required for state 'absent' or 'present'")

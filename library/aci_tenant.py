@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: aci_tenant
 short_description: Manage tenants on Cisco ACI fabrics
 description:
-- Manage tenants on a Cisco ACI fabric.
+- Manage tenants on Cisco ACI fabrics.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -87,7 +87,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all tenants
+        tenant=dict(type='str', required=False, aliases=['name', 'tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -105,10 +105,10 @@ def main():
     aci = ACIModule(module)
 
     if tenant is not None:
-        # Work with a specific tenant
+        # Work with a specific object
         path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
     elif state == 'query':
-        # Query all tenants
+        # Query all objects
         path = 'api/class/fvTenant.json'
     else:
         module.fail_json(msg="Parameter 'tenant' is required for state 'absent' or 'present'")

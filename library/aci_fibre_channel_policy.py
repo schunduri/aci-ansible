@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_fibre_channel_policy
-short_description: Manage ACI Fibre Channel interface policies
+short_description: Manage ACI Fibre Channel interface policies on Cisco ACI fabrics
 description:
-- Manage ACI Fiber Channel interface policies.
+- Manage ACI Fiber Channel interface policies on Cisco ACI fabrics.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -69,7 +69,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all policies
+        fc_policy=dict(type='str', required=False, aliases=['name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         port_mode=dict(type='str', choices=['f', 'np']),  # No default provided on purpose
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -89,10 +89,10 @@ def main():
     aci = ACIModule(module)
 
     if fc_policy is not None:
-        # Work with a specific filter
+        # Work with a specific object
         path = 'api/mo/uni/infra/fcIfPol-%(fc_policy)s.json' % module.params
     elif state == 'query':
-        # Query all filters
+        # Query all objects
         path = 'api/infra/class/fcIfPol.json'
     else:
         module.fail_json(msg="Parameter 'fc_policy' is required for state 'absent' or 'present'")

@@ -13,9 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_filter
-short_description: Manages top level filter objects
+short_description: Manages top level filter objects on Cisco ACI fabrics
 description:
-- Manages top level filter objects, i.e. not each entry
+- Manages top level filter objects on Cisco ACI fabrics.
+- This modules does not manage filter entries, see M(aci_filter_entry) for this functionality.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -98,8 +99,8 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        filter=dict(type='str', required=False, aliases=['name', 'filter_name']),  # Not required for querying all filters
-        tenant=dict(type='str', required=True, aliases=['tenant_name']),
+        filter=dict(type='str', required=False, aliases=['name', 'filter_name']),  # Not required for querying all objects
+        tenant=dict(type='str', required=True, aliases=['tenant_name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
@@ -120,10 +121,10 @@ def main():
     # TODO: Currently we require a tenant for a query, we could make this optional
     # TODO: Investigate for a URI to query objects for a specific tenant
     if filter_name is not None:
-        # Work with a specific filter
+        # Work with a specific object
         path = 'api/mo/uni/tn-%(tenant)s/flt-%(filter_name)s.json' % module.params
     elif state == 'query':
-        # Query all filters
+        # Query all objects
         path = 'api/node/class/vzFilter.json'
     else:
         module.fail_json(msg="Parameter 'filter' is required for state 'absent' or 'present'")

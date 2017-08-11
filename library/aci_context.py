@@ -13,9 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_context
-short_description: Manage private networks, contexts, in an ACI fabric
+short_description: Manage private networks (aka. contexts) on Cisco ACI fabrics
 description:
-- Offers ability to manage private networks. Each context is a private network associated to a tenant, i.e. VRF
+- Manage private networks (aka. contexts) on Cisco ACI fabrics.
+- Each context is a private network associated to a tenant, i.e. VRF.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -45,6 +46,12 @@ options:
   description:
     description:
     - Description for the VRF.
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 
@@ -101,8 +108,8 @@ def main():
         policy_control_direction=dict(choices=['ingress', 'egress'], type='str'),
         policy_control_preference=dict(choices=['enforced', 'unenforced'], type='str'),
         state=dict(choices=['absent', 'present', 'query'], type='str', default='present'),
-        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all filters
-        vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all filters
+        tenant=dict(type='str', required=False, aliases=['tenant_name']),  # Not required for querying all objects
+        vrf=dict(type='str', required=False, aliases=['context', 'name', 'vrf_name']),  # Not required for querying all objects
     )
 
     module = AnsibleModule(
@@ -124,10 +131,12 @@ def main():
             path = 'api/mo/uni/tn-%(tenant)s/ctx-%(vrf)s.json' % module.params
         elif state == 'query':
             path = 'api/mo/uni/tn-%(tenant)s.json?rsp-subtree=children&rsp-subtree-class=fvCtx&rsp-subtree-include=no-scoped' % module.params
+        else:
+            module.fail_json(msg="Parameter 'tenant' is required for state 'absent' or 'present'")
     elif state == 'query':
         path = 'api/class/fvCtx.json'
     else:
-        module.fail_json(msg="Parameters 'tenant,' and 'vrf' are required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'vrf' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
