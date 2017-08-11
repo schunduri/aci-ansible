@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_aep
-short_description: Direct access to the Cisco ACI APIC API
+short_description: Direct access to the Cisco ACI APIC API to manage Attachable Access Entity Profile
 description:
-- Offers direct access to the Cisco ACI APIC API to manage Attachable Access Entity Profile.
+- Connect to external virtual and physical domains by using Attachable Access Entity Profiles.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -24,10 +24,11 @@ version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
 options:
-    aep_name:
+    aep:
       description:
       - The name of the Attachable Access Entity Profile.
       required: yes
+      aliases: ['name','aep_name']
     description:
       description:
       - Description for the AEP.
@@ -46,7 +47,7 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: ACI-AEP
+    aep: ACI-AEP
     description: default
     state: present
 
@@ -55,7 +56,7 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: ACI-AEP
+    aep: ACI-AEP
     state: absent
 
 - name: Query an AEP
@@ -63,7 +64,7 @@ EXAMPLES = r'''
     hostname: apic
     username: admin
     password: SomeSecretPassword
-    aep_name: ACI-AEP
+    aep: ACI-AEP
     state: query
 
 - name: Query all AEPs
@@ -84,7 +85,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        aep_name=dict(type='str'),
+        aep=dict(type='str', aliases=['name','aep_name']), # not required for querying all AEPs
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -94,18 +95,18 @@ def main():
         supports_check_mode=True,
     )
 
-    aep_name = module.params['aep_name']
-    description = str(module.params['description'])
+    aep = module.params['aep']
+    description = module.params['description']
     state = module.params['state']
 
     aci = ACIModule(module)
 
-    if aep_name is not None or (aep_name is not None and state == 'query'):
-         path = 'api/mo/uni/infra/attentp-%(aep_name)s.json' % module.params
+    if aep is not None or (aep is not None and state == 'query'):
+         path = 'api/mo/uni/infra/attentp-%(aep)s.json' % module.params
     elif state == 'query':
         path = 'api/class/infraAttEntityP.json'
     else:
-        module.fail_json(msg="Parameter 'aep_name' is required for state 'absent' or 'present'")
+        module.fail_json(msg="Parameter 'aep' is required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -113,7 +114,7 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='infraAttEntityP', class_config=dict(name=aep_name, descr=description))
+        aci.payload(aci_class='infraAttEntityP', class_config=dict(name=aep, descr=description))
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='infraAttEntityP')
