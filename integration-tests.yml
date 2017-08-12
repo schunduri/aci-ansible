@@ -1,0 +1,5 @@
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+  - include_tasks: test/integration/targets/aci_tenant/tasks/main.yml
