@@ -16,53 +16,53 @@ module: aci_contract_subject
 short_description: Manages initial contract subjects(does not include contracts)
 description:
 -  Manage a group of filters for a specific application or service using contract subjects in Cisco ACI APIC APIs with this module.
-author: 
+author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
 - Jacob McGill (@jmcgill298)
 requirements:
 - ACI Fabric 1.0(3f)+
-notes: 
+notes:
 - The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
    tenant:
      description
-     - The name of the tenant 
+     - The name of the tenant.
      required: yes
      aliases: ['tenant_name']
    subject:
      description:
-     - The contract subject name
+     - The contract subject name.
      required: yes
      aliases: ['name', subject_name']
    contract:
      description:
-     - the name of the Contract 
+     - the name of the Contract.
      required: yes
      aliases: ['contract_name']
    reverse_filter:
      description:
-     - Select or De-select reverse filter port option
+     - Select or De-select reverse filter port option.
      default: no
      choices: [ yes, no ]
    priority:
      description:
-     - Qos class 
+     - Qos class.
      default: unspecified
      choices: [ unspecified, level1, level2, level3 ]
    target:
      description:
-     - Target DSCP
+     - Target DSCP.
      default: unspecified
    filter_name:
      description:
      - Filter Name
    directive:
      description:
-     - Directive for filter  (can be none or log)
+     - Directive for filter  (can be none or log).
    description:
      description:
-     - Description for the contract subject
+     - Description for the contract subject.
    state:
      description:
      - Use C(present) or C(absent) for adding or removing.
@@ -128,33 +128,33 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-    argument_spec=aci_argument_spec
+    argument_spec = aci_argument_spec
     argument_spec.update(
-            contract=dict(type="str", aliases=['contract_name']),
-            subject=dict(type="str", aliases=['name', 'subject_name']),
-            tenant=dict(type="str", aliases=['tenant_name']),
-            priority=dict(choices=[ 'unspecified','level1','level2','level3'],default='unspecified', required=False),
-            reverse_filter=dict(choices=['yes','no'], required=False, default='yes'),
-            target=dict(type="str", required=False, default='unspecified'),
-            description=dict(type="str", required=False, aliases=['descr']),
-            filter_name=dict(type="str", required=False),
-            directive=dict(choices=['none', 'log'], required=False, default='none'),
-            state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
-            method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
-        )
+        contract=dict(type="str", aliases=['contract_name']),
+        subject=dict(type="str", aliases=['name', 'subject_name']),
+        tenant=dict(type="str", aliases=['tenant_name']),
+        priority=dict(choices=['unspecified', 'level1', 'level2', 'level3'], default='unspecified', required=False),
+        reverse_filter=dict(choices=['yes','no'], required=False, default='yes'),
+        target=dict(type="str", required=False, default='unspecified'),
+        description=dict(type="str", required=False, aliases=['descr']),
+        filter_name=dict(type="str", required=False),
+        directive=dict(choices=['none', 'log'], required=False, default='none'),
+        state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
+        method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+    )
 
     module = AnsibleModule(
        argument_spec=argument_spec,
        supports_check_mode=True,
     )
 
-    subject=module.params['subject']
-    tenant=module.params['tenant']
-    priority=module.params['priority']
-    reverse_filter=module.params['reverse_filter']
-    target=module.params['target']
-    description=module.params['description']
-    contract= module.params['contract']
+    subject = module.params['subject']
+    tenant = module.params['tenant']
+    priority = module.params['priority']
+    reverse_filter = module.params['reverse_filter']
+    target = module.params['target']
+    description = module.params['description']
+    contract = module.params['contract']
     filter_name = module.params['filter_name']
     directive = module.params['directive']
     state = module.params['state']
@@ -164,8 +164,7 @@ def main():
 
     aci = ACIModule(module)
 
-
-    if (tenant,contract,subject) is not None:
+    if (tenant, contract, subject) is not None:
         # Work with a specific filter
         path = 'api/mo/uni/tn-%(tenant)s/brc-%(contract)s/subj-%(subject)s.json' % module.params
     elif state == 'query':
@@ -180,7 +179,8 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=target, descr=description),child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
+        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=target, descr=description),
+                     child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzSubj')
@@ -194,7 +194,5 @@ def main():
 
     module.exit_json(**aci.result)
 
-
 if __name__ == "__main__":
     main()
-
