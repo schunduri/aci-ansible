@@ -1,6 +1,8 @@
 FORMATTER=../ansible.git/docs/bin/plugin_formatter.py
 
-.PHONY: docs
+.PHONY: docs test
+
+all: test
 
 docs:
 	PYTHONPATH=../ansible.git/lib $(FORMATTER) -t rst --template-dir=../ansible.git/docs/templates --module-dir=library -o docs/
