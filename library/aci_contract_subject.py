@@ -66,6 +66,15 @@ options:
    description:
      description:
      - Description for the contract subject.
+   consumer_match:
+     description:
+     - The match criteria across consumers.
+     choices: [ all, at_least_one, at_most_one, none ]
+   provider_match:
+     description:
+     - The match criteria across providers.
+     - The APIC defaults new Contract Subjects to a value of at_least_one.
+     choices: [ all, at_least_one, at_most_one, none ]
    state:
      description:
      - Use C(present) or C(absent) for adding or removing.
@@ -142,6 +151,8 @@ def main():
         description=dict(type='str', aliases=['descr']),
         filter_name=dict(type='str'),
         directive=dict(type='str', choices=['none', 'log']),
+        consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
+        provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -160,6 +171,8 @@ def main():
     contract = module.params['contract']
     filter_name = module.params['filter_name']
     directive = module.params['directive']
+    consumer_match = module.params['consumer_match']
+    provider_match = module.params['provider_match']
     state = module.params['state']
 
     if directive == "none":
@@ -182,7 +195,8 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=dscp, descr=description),
+        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=dscp,
+                                                          consMatchT=consumer_match, provMatchT=provier_matach, descr=description),
                     child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
 
         # Generate config diff which will be used as POST request body
