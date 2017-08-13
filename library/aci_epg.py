@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_epg
-short_description: Manage End point Groups on Cisco ACI APIC
+short_description: Manage end point groups on Cisco ACI fabrics
 description:
-- Direct access to Cisco ACI APIC APIs to manage mapping applications to the network via End point groups.
+- Manage end point groups on Cisco ACI fabrics.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -29,36 +29,36 @@ options:
         description:
         - Name of an existing tenant.
         required: yes
-        aliases: ['tenant_name']
+        aliases: [ tenant_name ]
     app_profile:
         description:
         - Name of an existing application network profile, that will contain the EPGs.
         required: yes
-        aliases: ['app_profile_name']
+        aliases: [ app_profile_name ]
     epg:
         description:
-        - Name of the End Point Group Name.
+        - Name of the end point group.
         required: yes
-        aliases: ['name', epg_name']
+        aliases: [ name, epg_name ]
     bridge_domain:
         description:
-        - Name of the Bridge Domain being associated with the EPG.
+        - Name of the bridge domain being associated with the EPG.
         required: yes
-        aliases: ['bd_name']
+        aliases: [ bd_name ]
     priority:
         description:
         - Qos class.
+        choices: [ level1, level2, level3, unspecified ]
         default: unspecified
-        choices: ['level1', 'level2', 'level3', 'unspecified']
     intra_epg_isolation:
         description:
         - Intra EPG Isolation.
+        choices: [ enforced, unenforced ]
         default: unenforced
-        choices: ['enforced', 'unenforced']
     description:
         description:
         - Description for the EPG.
-        aliases: ['descr']
+        aliases: [ descr ]
     state:
         description:
         - Use C(present) or C(absent) for adding or removing.
@@ -82,6 +82,7 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
+
 - name: Remove an EPG
   aci_epg:
     hostname: apic
@@ -91,6 +92,7 @@ EXAMPLES = r'''
     app_profile: default
     epg: app_epg
     state: absent
+
 - name: Query an EPG
   aci_epg:
     hostname: apic
@@ -100,6 +102,7 @@ EXAMPLES = r'''
     app_profile: default
     epg: app_epg
     state: query
+
 - name: Query all EPgs
   aci_epg:
     hostname: apic
