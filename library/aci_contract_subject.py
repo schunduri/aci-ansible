@@ -134,7 +134,7 @@ def main():
         subject=dict(type="str", aliases=['name', 'subject_name']),
         tenant=dict(type="str", aliases=['tenant_name']),
         priority=dict(choices=['unspecified', 'level1', 'level2', 'level3'], default='unspecified', required=False),
-        reverse_filter=dict(choices=['yes','no'], required=False, default='yes'),
+        reverse_filter=dict(choices=['yes', 'no'], required=False, default='yes'),
         target=dict(type="str", required=False, default='unspecified'),
         description=dict(type="str", required=False, aliases=['descr']),
         filter_name=dict(type="str", required=False),
@@ -180,7 +180,7 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=target, descr=description),
-                     child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
+                    child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzSubj')
@@ -190,7 +190,6 @@ def main():
 
     elif state == 'absent':
         aci.delete_config()
-
 
     module.exit_json(**aci.result)
 
