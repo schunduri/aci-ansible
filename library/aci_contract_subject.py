@@ -28,38 +28,40 @@ options:
    tenant:
      description
      - The name of the tenant.
-     required: yes
-     aliases: ['tenant_name']
+     aliases: [ tenant_name ]
    subject:
      description:
      - The contract subject name.
-     required: yes
-     aliases: ['name', subject_name']
+     aliases: [ name, subject_name ]
    contract:
      description:
-     - the name of the Contract.
-     required: yes
+     - The name of the Contract.
      aliases: ['contract_name']
    reverse_filter:
      description:
-     - Select or De-select reverse filter port option.
-     default: no
+     - Determines if the APIC should reverse the src and dst ports to allow the
+       return traffic back (ACI is stateless filter).
+     - The APIC defaults new Contract Subjects to a reverse filter of yes.
      choices: [ yes, no ]
    priority:
      description:
-     - Qos class.
-     default: unspecified
+     - The QoS class.
+     - The APIC defaults new Contract Subjects to a priority of unspecified.
      choices: [ unspecified, level1, level2, level3 ]
    target:
      description:
-     - Target DSCP.
-     default: unspecified
+     - The target DSCP.
+     - The APIC defaults new Contract Subjects to a target DSCP of unspecified
+     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42,
+                AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
    filter_name:
      description:
-     - Filter Name
+     - The name of the Filter to associate with the Contract Subject.
    directive:
      description:
-     - Directive for filter  (can be none or log).
+     - Determines if APIC should enable log for Contract Subject to Filter Binding.
+     - The APIC defaults new Contract Subject to Filter bindings to a value of none.
+     choices: [ log, none ]
    description:
      description:
      - Description for the contract subject.
@@ -133,12 +135,12 @@ def main():
         contract=dict(type="str", aliases=['contract_name']),
         subject=dict(type="str", aliases=['name', 'subject_name']),
         tenant=dict(type="str", aliases=['tenant_name']),
-        priority=dict(choices=['unspecified', 'level1', 'level2', 'level3'], default='unspecified', required=False),
-        reverse_filter=dict(choices=['yes', 'no'], required=False, default='yes'),
-        target=dict(type="str", required=False, default='unspecified'),
-        description=dict(type="str", required=False, aliases=['descr']),
-        filter_name=dict(type="str", required=False),
-        directive=dict(choices=['none', 'log'], required=False, default='none'),
+        priority=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
+        reverse_filter=dict(choices=['yes', 'no']),
+        target=dict(type="str"),
+        description=dict(type="str", aliases=['descr']),
+        filter_name=dict(type="str"),
+        directive=dict(choices=['none', 'log'], default='none'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
