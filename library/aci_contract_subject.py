@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_contract_subject
-short_description: Manages initial contract subjects(does not include contracts)
+short_description: Manage initial contract subjects on Cisco ACI fabrics
 description:
--  Manage a group of filters for a specific application or service using contract subjects in Cisco ACI APIC APIs with this module.
+-  Manage initial contract subjects on Cisco ACI fabrics.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -36,7 +36,7 @@ options:
    contract:
      description:
      - The name of the Contract.
-     aliases: ['contract_name']
+     aliases: [ contract_name ]
    reverse_filter:
      description:
      - Determines if the APIC should reverse the src and dst ports to allow the
@@ -128,7 +128,6 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     state: query
-
 '''
 
 RETURN = r'''
