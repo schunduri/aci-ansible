@@ -151,7 +151,7 @@ def main():
         path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s/epg-%(epg)s.json' % module.params
     elif state == 'query':
         # Query all EPGs
-        path = 'api/class/fvAEPg.json' 
+        path = 'api/class/fvAEPg.json'
     else:
         module.fail_json(msg="Parameter 'tenant', 'app_profile', 'epg' are required for state 'absent' or 'present'")
 
@@ -162,7 +162,7 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(aci_class='fvAEPg', class_config=dict(name=epg, descr=description, prio=priority, pcEnfPref=intra_epg_isolation),
-                        child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
+                     child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAEPg')
