@@ -162,7 +162,7 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(aci_class='fvAEPg', class_config=dict(name=epg, descr=description, prio=priority, pcEnfPref=intra_epg_isolation),
-                     child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
+                    child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='fvAEPg')
