@@ -144,8 +144,8 @@ def main():
     )
 
     module = AnsibleModule(
-       argument_spec=argument_spec,
-       supports_check_mode=True,
+        argument_spec=argument_spec,
+        supports_check_mode=True,
     )
 
     subject = module.params['subject']
