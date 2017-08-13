@@ -1,9 +1,9 @@
 
-apic                     # single APIC in system- can also use IP if no DNS or /etc/hosts isn't setup
+apic       # single APIC in system- can also use IP if no DNS or /etc/hosts isn't setup
 
 
 [all:vars]
-inventory_hostname = "10.23.248.85"
+host = 192.168.130.10
 user = 'admin'
-pass = 'cisco123' 
+pass = 'Cisco!123' 
 

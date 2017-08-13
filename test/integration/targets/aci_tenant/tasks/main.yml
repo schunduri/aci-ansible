@@ -1,0 +1,30 @@
+# Test code for the ACI modules
+# Copyright 2017, Dag Wieers <dag@wieers.com>
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test that we have an ACI APIC host
+  fail:
+    msg: 'No ACI APIC host provided, aci_hostname missing'
+  when: aci_hostname is not defined
+
+- name: Test that we have an ACI username
+  fail:
+    msg: 'No ACI username provided, aci_username missing'
+  when: aci_username is not defined
+
+- name: Test that we have an ACI password
+  fail:
+    msg: 'No ACI password provided, aci_password missing'
+  when: aci_password is not defined
+
+- name: Test in normal mode
+  include_tasks: tests.yml
+  vars:
+    in_check_mode: no
+
+- name: Test in check-mode
+  include_tasks: tests.yml
+  vars:
+    in_check_mode: yes
+  check_mode: yes

@@ -1,0 +1,158 @@
+# Test code for the ACI modules
+# Copyright 2017, Dag Wieers <dag@wieers.com>
+#
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Remove tenant
+  aci_tenant: &tenant_absent
+    hostname: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    tenant: ansible_test
+    state: absent
+
+- name: Add tenant
+  aci_tenant: &tenant_present
+    hostname: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    tenant: ansible_test
+    state: present
+  register: add_tenant
+
+- name: Verify add_tenant
+  assert:
+    that:
+    - add_tenant.changed == true
+
+- name: Add tenant (again)
+  aci_tenant: *tenant_present
+  register: add_tenant_again
+
+- name: Verify add_tenant_again (normal mode)
+  assert:
+    that:
+    - add_tenant_again.changed == false
+  when: not in_check_mode
+
+- name: Verify add_tenant_again (check-mode)
+  assert:
+    that:
+    - add_tenant_again.changed == true
+  when: in_check_mode
+
+- name: Change description of tenant
+  aci_tenant:
+    <<: *tenant_present
+    description: Ansible test tenant
+  register: add_tenant_descr
+
+- name: Verify add_tenant_descr (normal mode)
+  assert:
+    that:
+    - add_tenant_descr.changed == true
+  when: not in_check_mode
+
+- name: Verify add_tenant_descr (check-mode)
+  assert:
+    that:
+    - add_tenant_descr.changed == true
+  when: in_check_mode
+
+- name: Change description of tenant (again)
+  aci_tenant:
+    <<: *tenant_present
+    description: Ansible test tenant
+  register: add_tenant_descr_again
+
+- name: Verify add_tenant_descr_again (normal mode)
+  assert:
+    that:
+    - add_tenant_descr_again.changed == false
+  when: not in_check_mode
+
+- name: Verify add_tenant_descr_again (check-mode)
+  assert:
+    that:
+    - add_tenant_descr.changed == true
+  when: in_check_mode
+
+- name: Add tenant again (with no description)
+  aci_tenant: *tenant_present
+  register: add_tenant_again_no_descr
+
+- name: Verify add_tenant_again_no_descr (normal mode)
+  assert:
+    that:
+    - add_tenant_again_no_descr.changed == false
+  when: not in_check_mode
+
+- name: Verify add_tenant_again_no_descr (check-mode)
+  assert:
+    that:
+    - add_tenant_again_no_descr.changed == true
+  when: in_check_mode
+
+- name: Query all tenants
+  aci_tenant: &tenant_query
+    hostname: '{{ aci_hostname }}'
+    username: '{{ aci_username }}'
+    password: '{{ aci_password }}'
+    validate_certs: no
+    state: query
+  register: query_all_tenants
+
+- name: Verify query_all_tenants
+  assert:
+    that:
+    - query_all_tenants.changed == false
+
+- name: Query our tenant
+  aci_tenant:
+    <<: *tenant_query
+    tenant: ansible_test
+  register: query_tenant
+
+- name: Verify query_tenant
+  assert:
+    that:
+    - query_tenant.changed == false
+
+- name: Remove tenant
+  aci_tenant: *tenant_absent
+  register: remove_tenant
+
+- name: Verify remove_tenant (normal mode)
+  assert:
+    that:
+    - remove_tenant.changed == true
+  when: not in_check_mode
+
+- name: Verify remove_tenant (check-mode)
+  assert:
+    that:
+    - remove_tenant.changed == false
+  when: in_check_mode
+
+- name: Remove tenant (again)
+  aci_tenant: *tenant_absent
+  register: remove_tenant_again
+
+- name: Verify remove_tenant_again
+  assert:
+    that:
+    - remove_tenant_again.changed == false
+
+# FIXME: Should this fail or return empty values ?
+- name: Query non-existing tenant
+  aci_tenant:
+    <<: *tenant_query
+    tenant: ansible_test
+  register: query_non_tenant
+
+- name: Verify query_non_tenant
+  assert:
+    that:
+    - query_non_tenant.changed == false
