@@ -48,12 +48,13 @@ options:
      - The QoS class.
      - The APIC defaults new Contract Subjects to a priority of unspecified.
      choices: [ unspecified, level1, level2, level3 ]
-   target:
+   dscp:
      description:
      - The target DSCP.
      - The APIC defaults new Contract Subjects to a target DSCP of unspecified
      choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42,
                 AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
+     aliases: [ target ]
    filter_name:
      description:
      - The name of the Filter to associate with the Contract Subject.
@@ -87,7 +88,7 @@ EXAMPLES = r'''
     description: test
     reverse_filter: yes
     priority: level1
-    target: unspecified
+    dscp: unspecified
     filter_name: default
     directive: log
     state: present
@@ -132,15 +133,15 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        contract=dict(type="str", aliases=['contract_name']),
-        subject=dict(type="str", aliases=['name', 'subject_name']),
-        tenant=dict(type="str", aliases=['tenant_name']),
-        priority=dict(choices=['unspecified', 'level1', 'level2', 'level3']),
-        reverse_filter=dict(choices=['yes', 'no']),
-        target=dict(type="str"),
-        description=dict(type="str", aliases=['descr']),
-        filter_name=dict(type="str"),
-        directive=dict(choices=['none', 'log'], default='none'),
+        contract=dict(type='str', aliases=['contract_name']),
+        subject=dict(type='str', aliases=['name', 'subject_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),
+        priority=dict(type='str', choices=['unspecified', 'level1', 'level2', 'level3']),
+        reverse_filter=dict(type='str', choices=['yes', 'no']),
+        dscp=dict(type='str', aliases=['target']),
+        description=dict(type='str', aliases=['descr']),
+        filter_name=dict(type='str'),
+        directive=dict(type='str', choices=['none', 'log']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -154,7 +155,7 @@ def main():
     tenant = module.params['tenant']
     priority = module.params['priority']
     reverse_filter = module.params['reverse_filter']
-    target = module.params['target']
+    dscp = module.params['dscp']
     description = module.params['description']
     contract = module.params['contract']
     filter_name = module.params['filter_name']
@@ -181,7 +182,7 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=target, descr=description),
+        aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=dscp, descr=description),
                     child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
 
         # Generate config diff which will be used as POST request body
