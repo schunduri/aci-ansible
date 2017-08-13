@@ -1,97 +1,83 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-DOCUMENTATION = '''
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
-
 module: aci_dhcp_assocation
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
-author: Cisco
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
     - Tenant should already exist
 options:
    action:
-	description:
-	    - post, get, and delete
+        description:
+            - post, get, and delete
         required: true
-        default: null
-	choices: ['post','get','delete']
-	aliases: []
+        choices: ['post','get','delete']
    tenant_name:
         description:
             - Tenant Name
         required: true
-        default: null
-        choices: []
-        aliases: []
    bd_name:
         description:
             - Bridge Domain
         required: true
-        default: null
-        choices: []
-        aliases: []
-        aliases: []
-    dhcp_name:
+   dhcp_name:
         description:
-            - Name for the DHCP relay label to be added  
-        required: false 
-        default: null 
-        choices: []
-        aliases: []
-    dhcp_scope:
+            - Name for the DHCP relay label to be added
+   dhcp_scope:
         description:
-            - DHCP Relay label scope can be either tenant or infra 
-        required: false 
-        default: 'infra' 
+            - DHCP Relay label scope can be either tenant or infra
+        default: 'infra'
         choices: ['tenant','infra']
-        aliases: []
-    host:
+   host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
-        default: null
-        choices: []
-        aliases: []
-    username:
+   username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
-        choices: []
-        aliases: []
-    password:
+   password:
         description:
             - Password used to login to the switch
         required: true
-        default: null
-        choices: []
-        aliases: []
-    protocol:
+   protocol:
         description:
             - Dictates connection protocol to use
-        required: false
         default: https
         choices: ['http', 'https']
-        aliases: []
 '''
 
-EXAMPLES = '''
-
- aci_dhcp_association:
-     action: "{{ action }}"
-     tenant_name: "{{ tenant_name }}" 
-     bd_name: "{{ bd_name }}" 
-     dhcp_name: "{{ dhcp_name }}"
-     dhcp_scope: "{{ dhcp_scope }}"
-     host: "{{ inventory_hostname }}"
-     username: "{{ username }}"
-     password: "{{ password }}"
-     protocol: "{{ protocol }}"
-
+EXAMPLES = r'''
+- aci_dhcp_association:
+    action: "{{ action }}"
+    tenant_name: "{{ tenant_name }}"
+    bd_name: "{{ bd_name }}"
+    dhcp_name: "{{ dhcp_name }}"
+    dhcp_scope: "{{ dhcp_scope }}"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    protocol: "{{ protocol }}"
 '''
 
 import socket
@@ -102,17 +88,20 @@ import requests
 def main():
     ''' Ansible module to take all the parameter values from the playbook '''
 
-    module = AnsibleModule(argument_spec=dict(
-        action=dict(choices=['get', 'post', 'delete'], required=False),
-        tenant_name=dict(type='str', required=True),
-        bd_name=dict(type='str', required=True),
-        dhcp_name=dict(type="str"),
-        dhcp_scope=dict(choices=['tenant', 'infra'], default='infra'),
-        host=dict(required=True),
-        username=dict(type='str', default='admin'),
-        password=dict(type='str'),
-        protocol=dict(choices=['http', 'https'], default='https'),
-    ), supports_check_mode=False)
+    module = AnsibleModule(
+        argument_spec=dict(
+            action=dict(choices=['get', 'post', 'delete'], required=False),
+            tenant_name=dict(type='str', required=True),
+            bd_name=dict(type='str', required=True),
+            dhcp_name=dict(type="str"),
+            dhcp_scope=dict(choices=['tenant', 'infra'], default='infra'),
+            host=dict(required=True),
+            username=dict(type='str', default='admin'),
+            password=dict(type='str'),
+            protocol=dict(choices=['http', 'https'], default='https'),
+        ),
+        supports_check_mode=False,
+    )
 
     tenant_name = module.params['tenant_name']
     host = socket.gethostbyname(module.params['host'])
@@ -128,7 +117,7 @@ def main():
 
     post_uri = 'api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name + '.json'
     get_uri = 'api/node/class/dhcpLbl.json'
-    delete_uri = 'api/mo/uni/tn-' +tenant_name + '/BD-' +bd_name+ '/dhcplbl-' +dhcp_name+ '.json'
+    delete_uri = 'api/mo/uni/tn-' + tenant_name + '/BD-' + bd_name + '/dhcplbl-' + dhcp_name + '.json'
 
     config_data = {
         "fvBD": {
@@ -148,7 +137,6 @@ def main():
 
         }
     }
-
 
     payload_data = json.dumps(config_data)
 
@@ -177,26 +165,26 @@ def main():
     if delete_uri.startswith('/'):
         delete_uri = delete_uri[1:]
     delete_url = apic + delete_uri
-  
+
     bd_get = apic + '/api/class/fvBD.json'
     if action == 'post':
-       get_bd = requests.get(bd_get, cookies=authenticate.cookies,
-                           data=payload_data, verify=False) 
-       data =json.loads(get_bd.text)
-       count = data['totalCount']
-       count = int(count)
-       bridge_domain_list = []    
-       if get_bd.status_code == 200:
-          for name in range(0,count):
-              bd = data['imdata'][name]['fvBD']['attributes']['name']
-              bridge_domain_list.append(bd)
-       if bd_name in bridge_domain_list:
-          req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
-       else:
-           module.fail_json(msg='Bridge Domain doesnt exist. Please create bridge domain before creating DHCP Relay Label')
-       
+        get_bd = requests.get(bd_get, cookies=authenticate.cookies,
+                              data=payload_data, verify=False)
+        data = json.loads(get_bd.text)
+        count = data['totalCount']
+        count = int(count)
+        bridge_domain_list = []
+        if get_bd.status_code == 200:
+            for name in range(0, count):
+                bd = data['imdata'][name]['fvBD']['attributes']['name']
+                bridge_domain_list.append(bd)
+        if bd_name in bridge_domain_list:
+            req = requests.post(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
+        else:
+            module.fail_json(msg='Bridge Domain doesnt exist. Please create bridge domain before creating DHCP Relay Label')
+
     elif action == 'get':
-       req = requests.get(get_url, cookies=authenticate.cookies,
+        req = requests.get(get_url, cookies=authenticate.cookies,
                            data=payload_data, verify=False)
     elif action == 'delete':
         req = requests.delete(delete_url, cookies=authenticate.cookies, data=payload_data, verify=False)

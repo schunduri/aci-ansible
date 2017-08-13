@@ -1,13 +1,26 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-DOCUMENTATION = '''
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
-
 module: aci_span_src_group
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
-author: Cisco
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
@@ -17,88 +30,59 @@ options:
         description:
             - post, get, or delete
         required: true
-        default: null
         choices: ['post','get', 'delete']
-        aliases: []
     tenant_name:
         description:
             - Tenant Name
         required: true
-        default: null
-        choices: []
-        aliases: []
     src_group:
         description:
             - Span source group name
         required: true
-        default: null
-        choices: []
-        aliases: []
     dst_group:
         description:
             - Span destination group name
         required: true
-        default: null
-        choices: []
-        aliases: []
     admin_state:
         description:
             - Enable or Disable admin state
-        required: false
         default: 'enabled'
         choices: ['enabled','disabled']
-        aliases: []
     descr:
         description:
             - Description for Span source group
-        required: false
-        default: null
-        choices: []
-        aliases: []
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
-        default: null
-        choices: []
-        aliases: []
     username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
-        choices: []
-        aliases: []
     password:
         description:
             - Password used to login to the switch
         required: true
-        default: null
-        choices: []
-        aliases: []
     protocol:
         description:
             - Dictates connection protocol to use
-        required: false
         default: https
         choices: ['http', 'https']
-        aliases: []
 '''
 
-EXAMPLES =  '''
-
-    aci_span_src_group: 
-	action:"{{ action }}" 	
-	tenant_name:"{{ tenant_name }}" 
-	src_group:"{{ src_group }}" 
-	dst_group:"{{ dst_group }}" 
-	admin_state:"{{ admin_state }}" 
-	descr:"{{ descr }}" 
-	host:"{{ inventory_hostname }}" 
-	username:"{{ username }}" 
-	password:"{{ password }}"
-	protocol: "{{ protocol }}"
-
+EXAMPLES = '''
+- aci_span_src_group:
+    action:"{{ action }}"
+    tenant_name:"{{ tenant_name }}"
+    src_group:"{{ src_group }}"
+    dst_group:"{{ dst_group }}"
+    admin_state:"{{ admin_state }}"
+    descr:"{{ descr }}"
+    host:"{{ inventory_hostname }}"
+    username:"{{ username }}"
+    password:"{{ password }}"
+    protocol: "{{ protocol }}"
 '''
 
 import socket
@@ -107,7 +91,6 @@ import requests
 
 
 def main():
-    
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(
@@ -115,15 +98,15 @@ def main():
             action=dict(choices=['get', 'post', 'delete'], required=False),
             src_group=dict(type='str'),
             dst_group=dict(type='str'),
-            admin_state=dict(choices=['enabled','disabled'], default='enabled'),
+            admin_state=dict(choices=['enabled', 'disabled'], default='enabled'),
             tenant_name=dict(type='str'),
-            descr=dict(type='str',required=False),       
+            descr=dict(type='str', required=False),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-        ), 
-        supports_check_mode=False
+        ),
+        supports_check_mode=False,
     )
 
     host = socket.gethostbyname(module.params['host'])
@@ -131,33 +114,32 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-    
+
     admin_state = module.params['admin_state']
     src_group = module.params['src_group']
     dst_group = module.params['dst_group']
-    tenant_name = module.params['tenant_name'] 
+    tenant_name = module.params['tenant_name']
     descr = module.params['descr']
-    descr=str(descr)
 
-    post_uri = '/api/mo/uni/tn-' + tenant_name +  '/srcgrp-' + src_group + '.json'
+    post_uri = '/api/mo/uni/tn-' + tenant_name + '/srcgrp-' + src_group + '.json'
     get_uri = '/api/node/class/spanSrcGrp.json'
 
     config_data = {
-      "spanSrcGrp": {
-	"attributes": {
-	    "adminSt": admin_state,
-	    "descr": descr,
-	    "name": src_group
-	  }, 	
-	  "children": [{
-		"spanSpanLbl": {
-			"attributes": {
-				"name": dst_group,
-				}
-			}
-		}]
-	  }
-     } 
+        "spanSrcGrp": {
+            "attributes": {
+                "adminSt": admin_state,
+                "descr": descr,
+                "name": src_group
+            },
+            "children": [{
+                "spanSpanLbl": {
+                    "attributes": {
+                        "name": dst_group,
+                    }
+                }
+            }]
+        }
+    }
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)

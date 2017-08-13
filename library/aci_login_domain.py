@@ -1,13 +1,26 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-DOCUMENTATION = '''
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+ANSIBLE_METADATA = {'metadata_version': '1.0',
+                    'status': ['preview'],
+                    'supported_by': 'community'}
+
+DOCUMENTATION = r'''
 ---
-
 module: aci_login_domain
 short_description: Direct access to the APIC API
 description:
     - Offers direct access to the APIC API
-author: Cisco
+author:
+- Swetha Chunduri (@schunduri)
+- Dag Wieers (@dagwieers)
+- Jacob McGill (@jmcgill298)
+version_added: '2.4'
 requirements:
     - ACI Fabric 1.0(3f)+
 notes:
@@ -16,64 +29,43 @@ options:
         description:
             - post, get, delete
         required: true
-        default: null
         choices: ['post','get', 'delete']
-        aliases: []
     login_domain:
         description:
             - Domain name
         required: true
-        default: null
-        choices: []
-        aliases: []
     descr:
         description:
             - Description for Login Domain
-        required: false
-        default: null
-        choices: []
-        aliases: []
     host:
         description:
             - IP Address or hostname of APIC resolvable by Ansible control host
         required: true
-        default: null
-        choices: []
-        aliases: []
     username:
         description:
             - Username used to login to the switch
         required: true
         default: 'admin'
-        choices: []
-        aliases: []
     password:
         description:
             - Password used to login to the switch
         required: true
-        default: null
-        choices: []
-        aliases: []
     protocol:
         description:
             - Dictates connection protocol to use
-        required: false
         default: https
         choices: ['http', 'https']
-        aliases: []
 '''
 
-EXAMPLES =  '''
-
-    aci_login_domain:
-        action: "{{ action }}"
-        login_domain: "{{ login_domain }}"
-        descr: "{{ descr }}"
-        host: "{{ inventory_hostname }}"
-        username: "{{ username }}"
-        password: "{{ password }}"
-	protocol: "{{ protocol }}"
-
+EXAMPLES = r'''
+- aci_login_domain:
+    action: "{{ action }}"
+    login_domain: "{{ login_domain }}"
+    descr: "{{ descr }}"
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    protocol: "{{ protocol }}"
 '''
 
 import socket
@@ -82,20 +74,19 @@ import requests
 
 
 def main():
-    
     ''' Ansible module to take all the parameter values from the playbook '''
 
     module = AnsibleModule(
         argument_spec=dict(
-            action=dict(choices=['get', 'post','delete']),
+            action=dict(choices=['get', 'post', 'delete']),
             login_domain=dict(type='str'),
-            descr=dict(type='str',required=False),       
+            descr=dict(type='str', required=False),
             host=dict(required=True),
             username=dict(type='str', default='admin'),
             password=dict(type='str'),
             protocol=dict(choices=['http', 'https'], default='https'),
-        ), 
-        supports_check_mode=False
+        ),
+        supports_check_mode=False,
     )
 
     host = socket.gethostbyname(module.params['host'])
@@ -103,29 +94,28 @@ def main():
     password = module.params['password']
     protocol = module.params['protocol']
     action = module.params['action']
-    
+
     login_domain = module.params['login_domain']
     descr = module.params['descr']
-    descr=str(descr)
 
-    post_uri = '/api/mo/uni/userext/logindomain-'  + login_domain + '.json'
+    post_uri = '/api/mo/uni/userext/logindomain-' + login_domain + '.json'
     get_uri = '/api/node/class/aaaLoginDomain.json'
 
     config_data = {
-       "aaaLoginDomain": {
-		"attributes": {
-		    "descr": descr,
-	            "name": login_domain
-		},
-		 "children": [{
-		      "aaaDomainAuth": {
-		            "attributes": {
-				"realm": "local"
-					}
-				}
-			}]
-       	}
-    } 
+        "aaaLoginDomain": {
+            "attributes": {
+                "descr": descr,
+                "name": login_domain,
+            },
+            "children": [{
+                "aaaDomainAuth": {
+                    "attributes": {
+                        "realm": "local",
+                    }
+                }
+            }]
+        }
+    }
     payload_data = json.dumps(config_data)
 
     apic = '{0}://{1}/'.format(protocol, host)
@@ -158,7 +148,7 @@ def main():
                            data=payload_data, verify=False)
     elif action == 'delete':
         req = requests.delete(post_url, cookies=authenticate.cookies, data=payload_data, verify=False)
- 
+
     response = req.text
     status = req.status_code
 
