@@ -361,7 +361,11 @@ class ACIModule(object):
             # Loop through proposed child configs and compare against existing child configuration
             for child in proposed_children:
                 child_class, proposed_child, existing_child = self.get_nested_config(child, existing_children)
-                child_update = self.get_diff_child(child_class, proposed_child, existing_child)
+
+                if existing_child is None:
+                    child_update = child
+                else:
+                    child_update = self.get_diff_child(child_class, proposed_child, existing_child)
 
                 # Update list of updated child configs only if the child config is different than what exists
                 if child_update:
@@ -420,10 +424,13 @@ class ACIModule(object):
         for key in proposed_child.keys():
             child_class = key
             proposed_config = proposed_child[key]['attributes']
+            existing_config = None
+
             # get existing dictionary from the list of existing to use for comparison
             for child in existing_children:
                 if child.get(child_class):
                     existing_config = child[key]['attributes']
+                    break
 
         return child_class, proposed_config, existing_config
 
