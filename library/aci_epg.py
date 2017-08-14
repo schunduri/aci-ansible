@@ -155,7 +155,7 @@ def main():
     description = module.params['description']
     priority = module.params['priority']
     intra_epg_isolation = module.params['intra_epg_isolation']
-    fwd_control = module.params['fwd_control]
+    fwd_control = module.params['fwd_control']
     state = module.params['state']
 
     aci = ACIModule(module)
