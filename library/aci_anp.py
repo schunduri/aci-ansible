@@ -13,9 +13,10 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_anp
-short_description: Manage top level application network profile objects
+short_description: Manage top level application network profile objects on Cisco ACI fabrics
 description:
--  Manage top level application network profile object, i.e. this does not manage EPGs.
+- Manage top level application network profile objects on Cisco ACI fabrics
+- This modules does not manage EPGs, see M(aci_epg) to do this.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -35,7 +36,7 @@ options:
      description:
      - The name of the application network profile.
      required: yes
-     aliases: [ app_profile_name ]
+     aliases: [ app_profile_name, name ]
    descr:
      description:
      - Description for the ANP.
@@ -58,6 +59,7 @@ EXAMPLES = r'''
     app_profile: default
     description: default ap
     state: present
+    
 - name: Remove an ANP
   aci_anp:
     hostname: apic
@@ -66,6 +68,7 @@ EXAMPLES = r'''
     tenant: production
     app_profile: default
     state: absent
+
 - name: Query an ANP
   aci_anp:
     hostname: apic
@@ -74,6 +77,7 @@ EXAMPLES = r'''
     tenant: production
     app_profile: default
     state: query
+
 - name: Query all ANPs
   aci_anp:
     hostname: apic
@@ -94,7 +98,7 @@ def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
         tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all anps
-        app_profile=dict(type='str', aliases=['app_profile_name']),
+        app_profile=dict(type='str', aliases=['app_profile_name', 'name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
