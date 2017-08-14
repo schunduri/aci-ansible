@@ -59,7 +59,7 @@ EXAMPLES = r'''
     app_profile: default
     description: default ap
     state: present
-    
+
 - name: Remove an ANP
   aci_anp:
     hostname: apic
