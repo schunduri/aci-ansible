@@ -60,6 +60,12 @@ options:
         description:
         - Description for the EPG.
         aliases: [ descr ]
+    fwd_control:
+      description:
+      - The forwarding control used by the EPG.
+      - The APIC defaults new EPGs to none.
+      choices: [ none, proxy-arp ]
+      default: none
     state:
         description:
         - Use C(present) or C(absent) for adding or removing.
@@ -123,13 +129,14 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        epg=dict(type="str", aliases=['name', 'epg_name']),
-        bridge_domain=dict(type="str", aliases=['bd_name']),
-        app_profile=dict(type="str", aliases=['app_profile_name']),
-        tenant=dict(type="str", aliases=['tenant_name']),
-        description=dict(type="str", required=False, aliases=['descr']),
-        priority=dict(choices=['level1', 'level2', 'level3', 'unspecified'], required=False, default='unspecified'),
-        intra_epg_isolation=dict(choices=['enforced', 'unenforced'], default='unenforced'),
+        epg=dict(type='str', aliases=['name', 'epg_name']),
+        bridge_domain=dict(type='str', aliases=['bd_name']),
+        app_profile=dict(type='str', aliases=['app_profile_name']),
+        tenant=dict(type='str', aliases=['tenant_name']),
+        description=dict(type='str', aliases=['descr']),
+        priority=dict(type='str', choices=['level1', 'level2', 'level3', 'unspecified']),
+        intra_epg_isolation=dict(choices=['enforced', 'unenforced']),
+        fwd_control=dict(type='str', choices=['none', 'proxy-arp']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
     )
@@ -148,6 +155,7 @@ def main():
     description = module.params['description']
     priority = module.params['priority']
     intra_epg_isolation = module.params['intra_epg_isolation']
+    fwd_control = module.params['fwd_control]
     state = module.params['state']
 
     aci = ACIModule(module)
@@ -166,7 +174,8 @@ def main():
 
     if state == 'present':
         # Filter out module parameters with null values
-        aci.payload(aci_class='fvAEPg', class_config=dict(name=epg, descr=description, prio=priority, pcEnfPref=intra_epg_isolation),
+        aci.payload(aci_class='fvAEPg', class_config=dict(name=epg, descr=description, prio=priority, pcEnfPref=intra_epg_isolation,
+                                                          fwdCtrl=fwd_control),
                     child_configs=[dict(fvRsBd=dict(attributes=dict(tnFvBDName=bridge_domain)))])
 
         # Generate config diff which will be used as POST request body
