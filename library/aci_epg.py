@@ -26,52 +26,51 @@ notes:
 - The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_anp) modules can be used for this.
 options:
-    tenant:
-        description:
-        - Name of an existing tenant.
-        required: yes
-        aliases: [ tenant_name ]
-    app_profile:
-        description:
-        - Name of an existing application network profile, that will contain the EPGs.
-        required: yes
-        aliases: [ app_profile_name ]
-    epg:
-        description:
-        - Name of the end point group.
-        required: yes
-        aliases: [ name, epg_name ]
-    bridge_domain:
-        description:
-        - Name of the bridge domain being associated with the EPG.
-        required: yes
-        aliases: [ bd_name ]
-    priority:
-        description:
-        - QoS class.
-        choices: [ level1, level2, level3, unspecified ]
-        default: unspecified
-    intra_epg_isolation:
-        description:
-        - Intra EPG Isolation.
-        choices: [ enforced, unenforced ]
-        default: unenforced
+  tenant:
     description:
-        description:
-        - Description for the EPG.
-        aliases: [ descr ]
-    fwd_control:
-      description:
-      - The forwarding control used by the EPG.
-      - The APIC defaults new EPGs to none.
-      choices: [ none, proxy-arp ]
-      default: none
-    state:
-        description:
-        - Use C(present) or C(absent) for adding or removing.
-        - Use C(query) for listing an object or multiple objects.
-        choices: [ absent, present, query ]
-        default: present
+    - Name of an existing tenant.
+    aliases: [ tenant_name ]
+  app_profile:
+    description:
+    - Name of an existing application network profile, that will contain the EPGs.
+    required: yes
+    aliases: [ app_profile_name ]
+  epg:
+    description:
+    - Name of the end point group.
+    required: yes
+    aliases: [ name, epg_name ]
+  bridge_domain:
+    description:
+    - Name of the bridge domain being associated with the EPG.
+    required: yes
+    aliases: [ bd_name ]
+  priority:
+    description:
+    - QoS class.
+    choices: [ level1, level2, level3, unspecified ]
+    default: unspecified
+  intra_epg_isolation:
+    description:
+    - Intra EPG Isolation.
+    choices: [ enforced, unenforced ]
+    default: unenforced
+  description:
+    description:
+    - Description for the EPG.
+    aliases: [ descr ]
+  fwd_control:
+    description:
+    - The forwarding control used by the EPG.
+    - The APIC defaults new EPGs to none.
+    choices: [ none, proxy-arp ]
+    default: none
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 
