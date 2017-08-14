@@ -23,19 +23,19 @@ author:
 version_added: '2.4'
 requirements:
 - ACI Fabric 1.0(3f)+
-notes: 
+notes:
 - The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
    tenant:
      description:
      - The name of an existing tenant.
      required: yes
-     aliases: ['tenant_name']
+     aliases: [ tenant_name ]
    app_profile:
      description:
      - The name of the application network profile.
      required: yes
-     aliases: ['app_profile_name']
+     aliases: [ app_profile_name ]
    descr:
      description:
      - Description for the ANP.
@@ -58,7 +58,6 @@ EXAMPLES = r'''
     app_profile: default
     description: default ap
     state: present
-
 - name: Remove an ANP
   aci_anp:
     hostname: apic
@@ -67,7 +66,6 @@ EXAMPLES = r'''
     tenant: production
     app_profile: default
     state: absent
-
 - name: Query an ANP
   aci_anp:
     hostname: apic
@@ -76,7 +74,6 @@ EXAMPLES = r'''
     tenant: production
     app_profile: default
     state: query
-
 - name: Query all ANPs
   aci_anp:
     hostname: apic
@@ -86,12 +83,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-
 #
-
 '''
-
-import json 
 
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
@@ -100,7 +93,7 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        tenant=dict(type='str', aliases=['tenant_name']), #tenant not required for querying all anps
+        tenant=dict(type='str', aliases=['tenant_name']),  # tenant not required for querying all anps
         app_profile=dict(type='str', aliases=['app_profile_name']),
         description=dict(type='str', aliases=['descr'], required=False),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -110,6 +103,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[['state', 'absent', ['tenant', 'app_profile']],
+                     ['state', 'present', ['tenant', 'app_profile']]]
     )
 
     tenant = module.params['tenant']
@@ -119,19 +114,22 @@ def main():
 
     aci = ACIModule(module)
 
-    if app_profile is not None:
-        if tenant is not None:
-             path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
-        else:
-             path = 'api/class/fvTenant.json?rsp-subtree=children&rsp-subtree-class=fvAp&rsp-subtree-filter=eq(fvAp.name, \"%(app_profile)s\")&rsp-subtree-include=no-scoped' % module.params
-    elif state == 'query':
+    if tenant is not None and app_profile is not None:
+        path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s.json' % module.params
+        filter_string = ''
+    elif tenant is None and app_profile is None:
         path = 'api/class/fvAp.json'
+        filter_string = ''
+    elif tenant is not None:
+        path = 'api/mo/uni/tn-%(tenant)s.json' % module.params
+        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvAp&rsp-subtree-include=no-scoped'
     else:
-        module.fail_json(msg="Parameter 'tenant' and 'app_profile' are required for state 'absent' or 'present'")
+        path = 'api/class/fvAp.json'
+        filter_string = '?query-target-filter=eq(fvAp.name, \"%(app_profile)s\")' % module.params
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-    aci.get_existing()
+    aci.get_existing(filter_string=filter_string)
 
     if state == 'present':
         # Filter out module parameters with null values
