@@ -146,8 +146,8 @@ def main():
     )
 
     epg = module.params['epg']
-    app_profile = module.params['app_profile']
-    tenant = module.params['tenant']
+    # app_profile = module.params['app_profile']
+    # tenant = module.params['tenant']
     bridge_domain = module.params['bridge_domain']
     description = module.params['description']
     priority = module.params['priority']
