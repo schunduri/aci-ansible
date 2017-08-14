@@ -23,7 +23,7 @@ author:
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant and App Profile used must exist before using this module in your playbook.
+- The C(tenant) and C(app_profile) used must exist before using this module in your playbook.
   The M(aci_tenant) and M(aci_anp) modules can be used for this.
 options:
     tenant:
