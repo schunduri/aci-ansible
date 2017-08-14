@@ -23,7 +23,8 @@ author:
 requirements:
 - ACI Fabric 1.0(3f)+
 notes:
-- The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
+- The tenant and App Profile used must exist before using this module in your playbook.
+  The M(aci_tenant) and M(aci_anp) modules can be used for this.
 options:
     tenant:
         description:
@@ -47,7 +48,7 @@ options:
         aliases: [ bd_name ]
     priority:
         description:
-        - Qos class.
+        - QoS class.
         choices: [ level1, level2, level3, unspecified ]
         default: unspecified
     intra_epg_isolation:
@@ -136,6 +137,8 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[['state', 'absent', ['app_profile', 'epg', 'tenant']],
+                     ['state', 'present', ['app_profile', 'epg', 'tenant']]]
     )
 
     epg = module.params['epg']
@@ -148,16 +151,15 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-
-    if (tenant, app_profile, epg) is not None:
+    
+    # TODO: Add logic to handle multiple input variations when query
+    if state != 'query':
         # Work with a specific EPG
         path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s/epg-%(epg)s.json' % module.params
-    elif state == 'query':
+    else:
         # Query all EPGs
         path = 'api/class/fvAEPg.json'
-    else:
-        module.fail_json(msg="Parameter 'tenant', 'app_profile', 'epg' are required for state 'absent' or 'present'")
-
+        
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
     aci.get_existing()
