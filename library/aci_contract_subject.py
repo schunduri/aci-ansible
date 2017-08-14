@@ -55,14 +55,6 @@ options:
      choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42,
                 AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
      aliases: [ target ]
-   filter_name:
-     description:
-     - The name of the Filter to associate with the Contract Subject.
-   directive:
-     description:
-     - Determines if APIC should enable log for Contract Subject to Filter Binding.
-     - The APIC defaults new Contract Subject to Filter bindings to a value of none.
-     choices: [ log, none ]
    description:
      description:
      - Description for the contract subject.
@@ -98,8 +90,6 @@ EXAMPLES = r'''
     reverse_filter: yes
     priority: level1
     dscp: unspecified
-    filter_name: default
-    directive: log
     state: present
 
 - name: Remove a contract subject
@@ -148,8 +138,6 @@ def main():
         reverse_filter=dict(type='str', choices=['yes', 'no']),
         dscp=dict(type='str', aliases=['target']),
         description=dict(type='str', aliases=['descr']),
-        filter_name=dict(type='str'),
-        directive=dict(type='str', choices=['none', 'log']),
         consumer_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -174,8 +162,8 @@ def main():
     provider_match = module.params['provider_match']
     state = module.params['state']
 
-    if directive == "none":
-        directive = ""
+    if directive is not None or filter_name is not None:
+        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter))
 
     aci = ACIModule(module)
 
@@ -195,8 +183,7 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=dscp,
-                                                          consMatchT=consumer_match, provMatchT=provier_matach, descr=description),
-                    child_configs=[dict(vzRsSubjFiltAtt=dict(attributes=dict(directives=directive, tnVzFilterName=filter_name)))])
+                                                          consMatchT=consumer_match, provMatchT=provier_matach, descr=description))
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzSubj')
