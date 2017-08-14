@@ -147,15 +147,17 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
+        required_if=[['state', 'absent', ['contract', 'subject', 'tenant']],
+                     ['state', 'present', ['contract', 'subject', 'tenant']]]
     )
 
     subject = module.params['subject']
-    tenant = module.params['tenant']
+    # tenant = module.params['tenant']
     priority = module.params['priority']
     reverse_filter = module.params['reverse_filter']
     dscp = module.params['dscp']
     description = module.params['description']
-    contract = module.params['contract']
+    # contract = module.params['contract']
     filter_name = module.params['filter_name']
     directive = module.params['directive']
     consumer_match = module.params['consumer_match']
@@ -163,18 +165,17 @@ def main():
     state = module.params['state']
 
     if directive is not None or filter_name is not None:
-        module.fail_json(msg="Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter))
+        module.fail_json(msg='Managing Contract Subjects to Filter bindings has been moved to M(aci_subject_bind_filter)')
 
     aci = ACIModule(module)
 
-    if (tenant, contract, subject) is not None:
+    # TODO: Flesh out paths and filter_strings for multiple parent params provided
+    if state != 'query':
         # Work with a specific filter
         path = 'api/mo/uni/tn-%(tenant)s/brc-%(contract)s/subj-%(subject)s.json' % module.params
-    elif state == 'query':
+    else:
         # Query all filters
         path = 'api/node/class/vzSubj.json'
-    else:
-        module.fail_json(msg="Parameters 'contract', 'subject' and 'tenant' are required for state 'absent' or 'present'")
 
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
@@ -183,7 +184,7 @@ def main():
     if state == 'present':
         # Filter out module parameters with null values
         aci.payload(aci_class='vzSubj', class_config=dict(name=subject, prio=priority, revFltPorts=reverse_filter, targetDscp=dscp,
-                                                          consMatchT=consumer_match, provMatchT=provier_matach, descr=description))
+                                                          consMatchT=consumer_match, provMatchT=provider_match, descr=description))
 
         # Generate config diff which will be used as POST request body
         aci.get_diff(aci_class='vzSubj')
