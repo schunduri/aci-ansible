@@ -89,7 +89,6 @@ EXAMPLES = r'''
     priority: unspecified
     intra_epg_isolation: unenforced
     state: present
-
 - name: Remove an EPG
   aci_epg:
     hostname: apic
@@ -99,7 +98,6 @@ EXAMPLES = r'''
     app_profile: default
     epg: app_epg
     state: absent
-
 - name: Query an EPG
   aci_epg:
     hostname: apic
@@ -109,7 +107,6 @@ EXAMPLES = r'''
     app_profile: default
     epg: app_epg
     state: query
-
 - name: Query all EPgs
   aci_epg:
     hostname: apic
@@ -159,18 +156,20 @@ def main():
     state = module.params['state']
 
     aci = ACIModule(module)
-    
+
     # TODO: Add logic to handle multiple input variations when query
     if state != 'query':
         # Work with a specific EPG
         path = 'api/mo/uni/tn-%(tenant)s/ap-%(app_profile)s/epg-%(epg)s.json' % module.params
+        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvRsBd&rsp-prop-include=config-only'
     else:
         # Query all EPGs
         path = 'api/class/fvAEPg.json'
-        
+        filter_string = '?rsp-subtree=children&rsp-subtree-class=fvRsBd'
+
     aci.result['url'] = '%(protocol)s://%(hostname)s/' % aci.params + path
 
-    aci.get_existing()
+    aci.get_existing(filter_string=filter_string)
 
     if state == 'present':
         # Filter out module parameters with null values
@@ -188,6 +187,7 @@ def main():
         aci.delete_config()
 
     module.exit_json(**aci.result)
+
 
 if __name__ == "__main__":
     main()
