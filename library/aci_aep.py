@@ -13,9 +13,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.0',
 DOCUMENTATION = r'''
 ---
 module: aci_aep
-short_description: Direct access to the Cisco ACI APIC API to manage Attachable Access Entity Profile
+short_description: Manage Attachable Access Entity Profile on Cisco ACI Fabric
 description:
-- Connect to external virtual and physical domains by using Attachable Access Entity Profiles.
+- Connect to external virtual and physical domains by using Attachable Access Entity Profiles on Cisco ACI Fabric.
 author:
 - Swetha Chunduri (@schunduri)
 - Dag Wieers (@dagwieers)
@@ -82,10 +82,11 @@ RETURN = r'''
 from ansible.module_utils.aci import ACIModule, aci_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     argument_spec = aci_argument_spec
     argument_spec.update(
-        aep=dict(type='str', aliases=['name','aep_name']), # not required for querying all AEPs
+        aep=dict(type='str', aliases=['name', 'aep_name']),  # not required for querying all AEPs
         description=dict(type='str', aliases=['descr']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
@@ -101,8 +102,8 @@ def main():
 
     aci = ACIModule(module)
 
-    if aep is not None or (aep is not None and state == 'query'):
-         path = 'api/mo/uni/infra/attentp-%(aep)s.json' % module.params
+    if aep is not None:
+        path = 'api/mo/uni/infra/attentp-%(aep)s.json' % module.params
     elif state == 'query':
         path = 'api/class/infraAttEntityP.json'
     else:
