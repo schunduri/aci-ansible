@@ -77,7 +77,6 @@ extends_documentation_fragment: aci
 '''
 
 EXAMPLES = r'''
-
 - name: Add a new contract subject
   aci_contract_subject:
     hostname: apic
@@ -91,7 +90,6 @@ EXAMPLES = r'''
     priority: level1
     dscp: unspecified
     state: present
-
 - name: Remove a contract subject
   aci_contract_subject:
     hostname: apic
@@ -101,7 +99,6 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: absent
-
 - name: Query a contract subject
   aci_contract_subject:
     hostname: apic
@@ -111,7 +108,6 @@ EXAMPLES = r'''
     contract: web_to_db
     subject: default
     state: query
-
 - name: Query all contract subjects
   aci_contract_subject:
     hostname: apic
