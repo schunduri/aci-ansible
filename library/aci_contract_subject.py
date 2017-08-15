@@ -25,54 +25,54 @@ requirements:
 notes:
 - The tenant used must exist before using this module in your playbook. The M(aci_tenant) module can be used for this.
 options:
-   tenant:
-     description
-     - The name of the tenant.
-     aliases: [ tenant_name ]
-   subject:
-     description:
-     - The contract subject name.
-     aliases: [ name, subject_name ]
-   contract:
-     description:
-     - The name of the Contract.
-     aliases: [ contract_name ]
-   reverse_filter:
-     description:
-     - Determines if the APIC should reverse the src and dst ports to allow the
-       return traffic back (ACI is stateless filter).
-     - The APIC defaults new Contract Subjects to a reverse filter of yes.
-     choices: [ yes, no ]
-   priority:
-     description:
-     - The QoS class.
-     - The APIC defaults new Contract Subjects to a priority of unspecified.
-     choices: [ unspecified, level1, level2, level3 ]
-   dscp:
-     description:
-     - The target DSCP.
-     - The APIC defaults new Contract Subjects to a target DSCP of unspecified
-     choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42,
-                AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
-     aliases: [ target ]
-   description:
-     description:
-     - Description for the contract subject.
-   consumer_match:
-     description:
-     - The match criteria across consumers.
-     choices: [ all, at_least_one, at_most_one, none ]
-   provider_match:
-     description:
-     - The match criteria across providers.
-     - The APIC defaults new Contract Subjects to a value of at_least_one.
-     choices: [ all, at_least_one, at_most_one, none ]
-   state:
-     description:
-     - Use C(present) or C(absent) for adding or removing.
-     - Use C(query) for listing an object or multiple objects.
-     choices: [ absent, present, query ]
-     default: present
+  tenant:
+    description
+    - The name of the tenant.
+    aliases: [ tenant_name ]
+  subject:
+    description:
+    - The contract subject name.
+    aliases: [ name, subject_name ]
+  contract:
+    description:
+    - The name of the Contract.
+    aliases: [ contract_name ]
+  reverse_filter:
+    description:
+    - Determines if the APIC should reverse the src and dst ports to allow the
+      return traffic back (ACI is stateless filter).
+    - The APIC defaults new Contract Subjects to a reverse filter of yes.
+    choices: [ yes, no ]
+  priority:
+    description:
+    - The QoS class.
+    - The APIC defaults new Contract Subjects to a priority of unspecified.
+    choices: [ unspecified, level1, level2, level3 ]
+  dscp:
+    description:
+    - The target DSCP.
+    - The APIC defaults new Contract Subjects to a target DSCP of unspecified
+    choices: [ AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42,
+               AF43, CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, EF, VA, unspecified ]
+    aliases: [ target ]
+  description:
+    description:
+    - Description for the contract subject.
+  consumer_match:
+    description:
+    - The match criteria across consumers.
+    choices: [ all, at_least_one, at_most_one, none ]
+  provider_match:
+    description:
+    - The match criteria across providers.
+    - The APIC defaults new Contract Subjects to a value of at_least_one.
+    choices: [ all, at_least_one, at_most_one, none ]
+  state:
+    description:
+    - Use C(present) or C(absent) for adding or removing.
+    - Use C(query) for listing an object or multiple objects.
+    choices: [ absent, present, query ]
+    default: present
 extends_documentation_fragment: aci
 '''
 
