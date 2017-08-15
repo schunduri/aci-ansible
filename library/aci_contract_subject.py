@@ -140,6 +140,8 @@ def main():
         provider_match=dict(type='str', choices=['all', 'at_least_one', 'at_most_one', 'none']),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
         method=dict(type='str', choices=['delete', 'get', 'post'], aliases=['action'], removed_in_version='2.6'),  # Deprecated starting from v2.6
+        directive=dict(type='str', removed_in_version='2.4'),  # Deprecated starting from v2.4
+        filter_name=dict(type='str', removed_in_version='2.4')  # Deprecated starting from v2.4
     )
 
     module = AnsibleModule(
